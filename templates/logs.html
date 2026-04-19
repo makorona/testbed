@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Логи — SessionLab{% endblock %}
+{% block nav_extra %}
+  <a href="/dashboard">Dashboard</a>
+  <a href="/logout">Выйти</a>
+{% endblock %}
+{% block content %}
+<style>
+.logs-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border);
+}
+.logs-title { font-family:var(--mono); font-size:1.2rem; font-weight:700; color:#e8f0f8; }
+.filters { display:flex; gap:0.5rem; margin-bottom:1.5rem; }
+.fbtn {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.08em;
+  text-transform:uppercase; padding:0.3rem 0.9rem;
+  border:1px solid var(--border2); background:transparent;
+  color:var(--text3); cursor:pointer; border-radius:2px; transition:all 0.2s;
+}
+.fbtn.active, .fbtn:hover { border-color:var(--accent); color:var(--accent); }
+table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+th {
+  text-align:left; padding:0.6rem 1rem;
+  font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--text3); border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+td { padding:0.65rem 1rem; border-bottom:1px solid var(--border); color:var(--text2); vertical-align:middle; }
+tr:hover td { background:var(--bg2); }
+.badge {
+  display:inline-block; padding:2px 8px; border-radius:2px;
+  font-size:10px; font-weight:500; letter-spacing:0.05em;
+}
+.b-ok    { background:rgba(0,230,118,0.1); color:var(--green); border:1px solid rgba(0,230,118,0.2); }
+.b-alert { background:rgba(255,204,0,0.1); color:var(--yellow); border:1px solid rgba(255,204,0,0.2); }
+.b-block { background:rgba(255,68,68,0.1); color:var(--red); border:1px solid rgba(255,68,68,0.2); }
+.empty { text-align:center; padding:3rem; color:var(--text3); font-family:var(--mono); font-size:12px; }
+.ua-cell { max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+
+<div class="logs-header">
+  <div>
+    <div class="tag">// мониторинг</div>
+    <div class="logs-title">Журнал сессий</div>
+  </div>
+  <a href="/dashboard" class="btn btn-muted">← Назад</a>
+</div>
+
+<div class="filters">
+  <button class="fbtn active" onclick="filter('all',this)">Все</button>
+  <button class="fbtn" onclick="filter('OK',this)">OK</button>
+  <button class="fbtn" onclick="filter('ALERT',this)">Alert</button>
+  <button class="fbtn" onclick="filter('BLOCK',this)">Block</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Пользователь</th>
+      <th>IP</th>
+      <th>User-Agent</th>
+      <th>Флаги</th>
+      <th>Статус</th>
+      <th>Время</th>
+    </tr>
+  </thead>
+  <tbody id="tb">
+  {% if logs %}
+    {% for l in logs %}
+    <tr data-a="{{ l.action }}">
+      <td style="color:var(--text3)">{{ l.id }}</td>
+      <td style="color:var(--text)">{{ l.username }}</td>
+      <td>{{ l.ip }}</td>
+      <td class="ua-cell" title="{{ l.user_agent }}">{{ l.user_agent[:35] }}{% if l.user_agent and l.user_agent|length > 35 %}...{% endif %}</td>
+      <td style="color:var(--text3);font-size:11px">{{ l.flags or '—' }}</td>
+      <td>
+        {% if l.action == 'OK' %}<span class="badge b-ok">OK</span>
+        {% elif l.action == 'ALERT' %}<span class="badge b-alert">ALERT</span>
+        {% else %}<span class="badge b-block">BLOCK</span>{% endif %}
+      </td>
+      <td style="color:var(--text3)">{{ l.timestamp }}</td>
+    </tr>
+    {% endfor %}
+  {% else %}
+    <tr><td colspan="7" class="empty">Логов пока нет — войдите в систему</td></tr>
+  {% endif %}
+  </tbody>
+</table>
+
+<script>
+function filter(t, btn) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#tb tr[data-a]').forEach(r => {
+    r.style.display = (t === 'all' || r.dataset.a === t) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

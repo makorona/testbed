@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SessionLab{% endblock %}
+{% block nav_extra %}
+  <a href="/logs">Логи</a>
+  <a href="/logout">Выйти</a>
+{% endblock %}
+{% block content %}
+<style>
+.dash-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  margin-bottom:2.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border);
+}
+.dash-title {
+  font-family:var(--mono); font-size:1.3rem; font-weight:700; color:#e8f0f8;
+}
+.dash-sub { font-size:12px; color:var(--text3); margin-top:0.3rem; }
+.banner {
+  border-radius:2px; padding:0.9rem 1.2rem;
+  margin-bottom:2rem; font-family:var(--mono); font-size:12px;
+  line-height:1.6;
+}
+.banner-ok     { background:rgba(0,230,118,0.06); border:1px solid rgba(0,230,118,0.2); border-left:3px solid var(--green); color:var(--green); }
+.banner-alert  { background:rgba(255,204,0,0.06); border:1px solid rgba(255,204,0,0.2); border-left:3px solid var(--yellow); color:var(--yellow); }
+.banner-block  { background:rgba(255,68,68,0.06); border:1px solid rgba(255,68,68,0.2); border-left:3px solid var(--red); color:var(--red); }
+.dash-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem;
+}
+.stat-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:4px; padding:1.2rem 1.4rem;
+}
+.stat-label {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--text3); margin-bottom:0.5rem;
+}
+.stat-value { font-family:var(--mono); font-size:1rem; font-weight:700; color:var(--text); word-break:break-all; }
+.val-ok     { color:var(--green); }
+.val-warn   { color:var(--yellow); }
+.val-danger { color:var(--red); }
+.risk-bar-wrap { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:0.6rem; }
+.risk-bar-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+.token-section {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:4px; padding:1.5rem; margin-bottom:2rem;
+}
+.token-head {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--text3); margin-bottom:0.8rem;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.token-box {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:2px;
+  padding:0.8rem 1rem; font-family:var(--mono); font-size:11px;
+  color:var(--text2); word-break:break-all; line-height:1.9;
+  cursor:pointer; transition:border-color 0.2s;
+}
+.token-box:hover { border-color:var(--accent); }
+.th { color:#ff6b9d; }
+.tp { color:#00d4ff; }
+.ts_ { color:#00e676; }
+.td { color:var(--text3); }
+.copy-hint { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:0.4rem; }
+.scenarios {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem;
+}
+.sc {
+  background:var(--bg2); border:1px solid var(--border);
+  border-top:3px solid var(--border2); border-radius:4px;
+  padding:1.2rem; transition:border-top-color 0.2s;
+}
+.sc:hover { border-top-color:var(--accent); }
+.sc-id { font-family:var(--mono); font-size:10px; color:var(--text3); margin-bottom:0.4rem; }
+.sc-name { font-family:var(--mono); font-size:13px; font-weight:500; color:var(--text); margin-bottom:0.4rem; }
+.sc-desc { font-size:12px; color:var(--text3); line-height:1.6; }
+.sc-cmd {
+  margin-top:0.8rem; background:var(--bg3); border:1px solid var(--border);
+  border-radius:2px; padding:0.5rem 0.7rem;
+  font-family:var(--mono); font-size:10px; color:var(--accent); line-height:1.7;
+}
+</style>
+
+{% if action == "BLOCK" %}
+<div class="banner banner-block">⛔ BLOCKED — Аномалия: {{ flags | join(', ') }} — Risk: {{ risk }}/100</div>
+{% elif action == "ALERT" %}
+<div class="banner banner-alert">⚠ ALERT — Подозрительно: {{ flags | join(', ') }} — Risk: {{ risk }}/100</div>
+{% else %}
+<div class="banner banner-ok">✓ SESSION OK — Нормальная активность — Risk: {{ risk }}/100</div>
+{% endif %}
+
+<div class="dash-header">
+  <div>
+    <div class="tag">// личный кабинет</div>
+    <div class="dash-title">Добро пожаловать, {{ user }}</div>
+    <div class="dash-sub">Сессия активна — токен действителен 1 час</div>
+  </div>
+  <a href="/logout" class="btn btn-danger">Выйти</a>
+</div>
+
+<div class="dash-grid">
+  <div class="stat-card">
+    <div class="stat-label">IP адрес</div>
+    <div class="stat-value">{{ session_ip }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Статус сессии</div>
+    <div class="stat-value {% if action=='BLOCK' %}val-danger{% elif action=='ALERT' %}val-warn{% else %}val-ok{% endif %}">
+      {{ action }}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Risk Score</div>
+    <div class="stat-value {% if risk >= 60 %}val-danger{% elif risk >= 30 %}val-warn{% else %}val-ok{% endif %}">
+      {{ risk }}/100
+    </div>
+    <div class="risk-bar-wrap">
+      <div class="risk-bar-fill" id="rb"
+        style="width:0%;background:{% if risk>=60 %}var(--red){% elif risk>=30 %}var(--yellow){% else %}var(--green){% endif %}">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="token-section">
+  <div class="token-head">
+    <span>JWT токен текущей сессии</span>
+    <span id="cp" style="color:var(--green);display:none">скопировано ✓</span>
+  </div>
+  {% if token %}
+  {% set parts = token.split('.') %}
+  <div class="token-box" onclick="copyToken()" id="tb">
+    <span class="th">{{ parts[0] }}</span><span class="td">.</span><span class="tp">{{ parts[1] }}</span><span class="td">.</span><span class="ts_">{{ parts[2] }}</span>
+  </div>
+  {% else %}
+  <div class="token-box">токен недоступен</div>
+  {% endif %}
+  <div class="copy-hint">↑ нажмите чтобы скопировать — используйте для демонстрации token replay атаки</div>
+</div>
+
+<div class="tag" style="margin-bottom:1rem">// сценарии демонстрации</div>
+<div class="scenarios">
+  <div class="sc">
+    <div class="sc-id">SCENARIO A</div>
+    <div class="sc-name">Нормальная сессия</div>
+    <div class="sc-desc">Обычный вход с одного устройства. Детектор не срабатывает.</div>
+    <div class="sc-cmd">action: OK<br>risk: 0/100</div>
+  </div>
+  <div class="sc">
+    <div class="sc-id">SCENARIO B</div>
+    <div class="sc-name">Token Replay</div>
+    <div class="sc-desc">Скопируй токен выше, используй с другого IP или User-Agent.</div>
+    <div class="sc-cmd">curl -H "Cookie: token=..." \<br>/dashboard</div>
+  </div>
+  <div class="sc">
+    <div class="sc-id">SCENARIO C</div>
+    <div class="sc-name">Детекция + блокировка</div>
+    <div class="sc-desc">IP и UA не совпадают — risk ≥ 60 → BLOCK.</div>
+    <div class="sc-cmd">flags: IP_CHANGE<br>flags: DEVICE_CHANGE</div>
+  </div>
+</div>
+
+<script>
+function copyToken() {
+  const t = document.getElementById('tb').innerText.trim();
+  navigator.clipboard.writeText(t).then(() => {
+    const el = document.getElementById('cp');
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  });
+}
+setTimeout(() => {
+  document.getElementById('rb').style.width = '{{ risk }}%';
+}, 100);
+</script>
+{% endblock %}

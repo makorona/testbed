@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}SessionLab — Главная{% endblock %}
+{% block content %}
+<style>
+.hero {
+  min-height:calc(100vh - 120px);
+  display:flex; flex-direction:column; justify-content:center;
+  padding:4rem 0;
+}
+.hero-eyebrow {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:1.5rem;
+  display:flex; align-items:center; gap:0.6rem;
+}
+.hero-eyebrow::before { content:''; width:24px; height:1px; background:var(--accent); }
+h1 {
+  font-family:var(--mono); font-size:clamp(2rem,5vw,3.4rem);
+  font-weight:700; line-height:1.1; color:#e8f0f8;
+  margin-bottom:1.5rem; letter-spacing:-0.02em;
+}
+h1 .ac { color:var(--accent); }
+h1 .dim { color:var(--text3); }
+.hero-desc {
+  max-width:520px; font-size:15px; color:var(--text2);
+  line-height:1.8; margin-bottom:2.5rem;
+}
+.hero-cta { display:flex; gap:1rem; flex-wrap:wrap; }
+.stats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:1px; margin-top:5rem;
+  background:var(--border); border:1px solid var(--border);
+  border-radius:4px; overflow:hidden;
+}
+.stat {
+  background:var(--bg2); padding:1.4rem 1.5rem;
+}
+.stat-num {
+  font-family:var(--mono); font-size:1.9rem; font-weight:700;
+  color:var(--accent); line-height:1; margin-bottom:0.4rem;
+}
+.stat-lbl { font-size:12px; color:var(--text3); line-height:1.4; }
+.attacks {
+  margin-top:4rem; display:grid; grid-template-columns:repeat(2,1fr); gap:1rem;
+}
+.attack {
+  background:var(--bg2); border:1px solid var(--border);
+  border-left:3px solid var(--border2); padding:1.1rem 1.4rem;
+  border-radius:2px; transition:border-left-color 0.2s;
+}
+.attack:hover { border-left-color:var(--accent); }
+.attack-name {
+  font-family:var(--mono); font-size:12px; font-weight:500;
+  color:var(--text); margin-bottom:0.3rem;
+}
+.attack-desc { font-size:12px; color:var(--text3); line-height:1.6; }
+.section-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text3);
+  margin-bottom:1.2rem; padding-bottom:0.5rem;
+  border-bottom:1px solid var(--border);
+}
+</style>
+<div class="hero">
+  <div class="hero-eyebrow">дипломный проект — информационная безопасность</div>
+  <h1>Session<span class="ac">Hijack</span><br><span class="dim">Research</span> Lab</h1>
+  <p class="hero-desc">
+    Учебная среда для исследования атак на сессионные токены в веб-приложениях.
+    Моделирование, обнаружение и предотвращение Session Hijacking.
+  </p>
+  <div class="hero-cta">
+    <a href="/register" class="btn">Создать аккаунт</a>
+    <a href="/login" class="btn btn-muted">Войти</a>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-lbl">сценария атаки для демонстрации</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">JWT</div>
+      <div class="stat-lbl">токены с привязкой к IP и устройству</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">live</div>
+      <div class="stat-lbl">детектор аномалий в реальном времени</div>
+    </div>
+  </div>
+  <div style="margin-top:4rem">
+    <div class="section-label">Векторы атак</div>
+    <div class="attacks">
+      <div class="attack">
+        <div class="attack-name">Token Replay</div>
+        <div class="attack-desc">Повторное использование перехваченного токена с другого устройства</div>
+      </div>
+      <div class="attack">
+        <div class="attack-name">IP Spoofing</div>
+        <div class="attack-desc">Подмена IP адреса при использовании украденной сессии</div>
+      </div>
+      <div class="attack">
+        <div class="attack-name">Session Fixation</div>
+        <div class="attack-desc">Принудительная установка известного session ID до аутентификации</div>
+      </div>
+      <div class="attack">
+        <div class="attack-name">Device Change</div>
+        <div class="attack-desc">Использование токена с другого браузера или User-Agent</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
