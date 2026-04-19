@@ -61,12 +61,11 @@ def analyze(payload: dict, current_ip: str, current_ua: str) -> dict:
 # ── Маршруты ─────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    return templates.TemplateResponse("register.html",
-        {"request": request, "error": None})
+    return templates.TemplateResponse(request, "register.html", {"error": None})
 
 @app.post("/register")
 async def register(request: Request,
@@ -74,18 +73,14 @@ async def register(request: Request,
                    password: str = Form(),
                    password2: str = Form()):
     if password != password2:
-        return templates.TemplateResponse("register.html",
-            {"request": request, "error": "Пароли не совпадают"})
+        return templates.TemplateResponse(request, "register.html", {"error": "Пароли не совпадают"})
     if len(password) < 6:
-        return templates.TemplateResponse("register.html",
-            {"request": request, "error": "Пароль минимум 6 символов"})
+        return templates.TemplateResponse(request, "register.html", {"error": "Пароль минимум 6 символов"})
     if len(username) < 3:
-        return templates.TemplateResponse("register.html",
-            {"request": request, "error": "Логин минимум 3 символа"})
+        return templates.TemplateResponse(request, "register.html", {"error": "Логин минимум 3 символа"})
     conn = get_conn()
     if conn.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
-        return templates.TemplateResponse("register.html",
-            {"request": request, "error": "Пользователь уже существует"})
+        return templates.TemplateResponse(request, "register.html", {"error": "Пользователь уже существует"})
     hashed = hashlib.sha256(password.encode()).hexdigest()
     conn.execute("INSERT INTO users VALUES (?,?)", (username, hashed))
     conn.commit()
@@ -93,8 +88,7 @@ async def register(request: Request,
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html",
-        {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 @app.post("/login")
 async def login(request: Request,
@@ -107,8 +101,7 @@ async def login(request: Request,
         (username, hashed)
     ).fetchone()
     if not user:
-        return templates.TemplateResponse("login.html",
-            {"request": request, "error": "Неверный логин или пароль"})
+        return templates.TemplateResponse(request, "login.html", {"error": "Неверный логин или пароль"})
 
     payload = {
         "user_id": username,
@@ -154,15 +147,13 @@ async def dashboard(request: Request):
     )
     conn.commit()
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request":    request,
+    return templates.TemplateResponse(request, "dashboard.html", {
         "user":       payload["user_id"],
         "token":      token,
         "session_ip": current_ip,
         "action":     result["action"],
         "flags":      result["flags"],
-        "risk":       result["risk_score"],
-    })
+        "risk":       result["risk_score"]})
 
 @app.get("/logs", response_class=HTMLResponse)
 async def logs_page(request: Request):
@@ -173,8 +164,7 @@ async def logs_page(request: Request):
     rows = conn.execute(
         "SELECT * FROM logs ORDER BY id DESC LIMIT 200"
     ).fetchall()
-    return templates.TemplateResponse("logs.html",
-        {"request": request, "logs": rows})
+    return templates.TemplateResponse(request, "logs.html", {"logs": rows})
 
 @app.get("/logout")
 async def logout():
