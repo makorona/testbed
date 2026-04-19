@@ -10,6 +10,16 @@ SECRET = os.getenv("SECRET_KEY", "diploma_session_key_2025")
 DB_PATH = os.getenv("DB_PATH", "users.db")
 request_counts = defaultdict(list)
 
+# ── Реальный IP (за Render proxy) ────────────────────
+def get_real_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip
+    return request.client.host
+
 # ── База данных ──────────────────────────────────────
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -32,7 +42,7 @@ def get_conn():
 # ── Rate limiting ────────────────────────────────────
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
-    ip = request.client.host
+    ip = get_real_ip(request)
     now = time.time()
     request_counts[ip] = [t for t in request_counts[ip] if now - t < 60]
     if len(request_counts[ip]) > 60:
@@ -44,17 +54,24 @@ async def rate_limit(request: Request, call_next):
 def analyze(payload: dict, current_ip: str, current_ua: str) -> dict:
     flags, risk = [], 0
 
-    if payload.get("ip") != current_ip:
+    original_ip = payload.get("ip", "")
+    original_ua = payload.get("ua", "")
+
+    if original_ip and original_ip != current_ip:
         flags.append("IP_CHANGE")
         risk += 40
 
-    if payload.get("ua") != current_ua:
+    if original_ua and original_ua != current_ua:
         flags.append("DEVICE_CHANGE")
         risk += 30
 
     return {
-        "risk_score": min(risk, 100),
-        "flags": flags,
+        "risk_score":   min(risk, 100),
+        "flags":        flags,
+        "original_ip":  original_ip,
+        "original_ua":  original_ua,
+        "current_ip":   current_ip,
+        "current_ua":   current_ua,
         "action": "BLOCK" if risk >= 60 else "ALERT" if risk >= 30 else "OK"
     }
 
@@ -73,14 +90,18 @@ async def register(request: Request,
                    password: str = Form(),
                    password2: str = Form()):
     if password != password2:
-        return templates.TemplateResponse(request, "register.html", {"error": "Пароли не совпадают"})
+        return templates.TemplateResponse(request, "register.html",
+            {"error": "Пароли не совпадают"})
     if len(password) < 6:
-        return templates.TemplateResponse(request, "register.html", {"error": "Пароль минимум 6 символов"})
+        return templates.TemplateResponse(request, "register.html",
+            {"error": "Пароль минимум 6 символов"})
     if len(username) < 3:
-        return templates.TemplateResponse(request, "register.html", {"error": "Логин минимум 3 символа"})
+        return templates.TemplateResponse(request, "register.html",
+            {"error": "Логин минимум 3 символа"})
     conn = get_conn()
     if conn.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone():
-        return templates.TemplateResponse(request, "register.html", {"error": "Пользователь уже существует"})
+        return templates.TemplateResponse(request, "register.html",
+            {"error": "Пользователь уже существует"})
     hashed = hashlib.sha256(password.encode()).hexdigest()
     conn.execute("INSERT INTO users VALUES (?,?)", (username, hashed))
     conn.commit()
@@ -101,11 +122,13 @@ async def login(request: Request,
         (username, hashed)
     ).fetchone()
     if not user:
-        return templates.TemplateResponse(request, "login.html", {"error": "Неверный логин или пароль"})
+        return templates.TemplateResponse(request, "login.html",
+            {"error": "Неверный логин или пароль"})
 
+    real_ip = get_real_ip(request)
     payload = {
         "user_id": username,
-        "ip":      request.client.host,
+        "ip":      real_ip,
         "ua":      request.headers.get("user-agent", ""),
         "exp":     datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }
@@ -113,14 +136,12 @@ async def login(request: Request,
 
     conn.execute(
         "INSERT INTO sessions (username,token,ip,user_agent) VALUES (?,?,?,?)",
-        (username, token, request.client.host,
-         request.headers.get("user-agent", ""))
+        (username, token, real_ip, request.headers.get("user-agent", ""))
     )
     conn.commit()
 
     resp = RedirectResponse("/dashboard", status_code=302)
-    resp.set_cookie("token", token, httponly=True,
-                    samesite="lax", max_age=3600)
+    resp.set_cookie("token", token, httponly=True, samesite="lax", max_age=3600)
     return resp
 
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -135,7 +156,7 @@ async def dashboard(request: Request):
     except Exception:
         return RedirectResponse("/login")
 
-    current_ip = request.client.host
+    current_ip = get_real_ip(request)
     current_ua = request.headers.get("user-agent", "")
     result = analyze(payload, current_ip, current_ua)
 
@@ -148,12 +169,15 @@ async def dashboard(request: Request):
     conn.commit()
 
     return templates.TemplateResponse(request, "dashboard.html", {
-        "user":       payload["user_id"],
-        "token":      token,
-        "session_ip": current_ip,
-        "action":     result["action"],
-        "flags":      result["flags"],
-        "risk":       result["risk_score"]})
+        "user":         payload["user_id"],
+        "token":        token,
+        "session_ip":   current_ip,
+        "original_ip":  result["original_ip"],
+        "original_ua":  result["original_ua"],
+        "action":       result["action"],
+        "flags":        result["flags"],
+        "risk":         result["risk_score"],
+    })
 
 @app.get("/logs", response_class=HTMLResponse)
 async def logs_page(request: Request):
