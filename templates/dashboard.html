@@ -59,6 +59,38 @@
 .tp { color:#00d4ff; }
 .ts_ { color:#00e676; }
 .td { color:var(--text3); }
+
+.fake-ad {
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 0; margin-bottom: 2rem; overflow: hidden;
+  transition: border-color 0.2s; position: relative;
+}
+.fake-ad:hover { border-color: #f0a500; }
+.ad-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0.3rem 0.8rem; background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.ad-inner {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.2rem; background: linear-gradient(135deg, #1a1f2e, #0f1318);
+}
+.ad-icon { font-size: 2rem; flex-shrink: 0; }
+.ad-content { flex: 1; }
+.ad-title {
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  color: #f0c040; margin-bottom: 0.3rem;
+}
+.ad-desc { font-size: 12px; color: var(--text2); }
+.ad-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  background: #f0a500; color: #000; padding: 0.5rem 1rem;
+  border-radius: 3px; white-space: nowrap; flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+.fake-ad:hover .ad-btn { background: #ffbb00; }
+
 .copy-hint { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:0.4rem; }
 .scenarios {
   display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem;
@@ -134,6 +166,20 @@
   <div class="token-box">токен недоступен</div>
   {% endif %}
   <div class="copy-hint">↑ нажмите чтобы скопировать — используйте для демонстрации token replay атаки</div>
+</div>
+
+
+<!-- фейковый рекламный баннер — ведёт на /stealer -->
+<div class="fake-ad" onclick="window.location.href='/stealer'" style="cursor:pointer">
+  <div class="ad-label">реклама</div>
+  <div class="ad-inner">
+    <div class="ad-icon">🎁</div>
+    <div class="ad-content">
+      <div class="ad-title">Вы выиграли Premium подписку!</div>
+      <div class="ad-desc">Нажмите чтобы активировать бесплатный доступ на 30 дней</div>
+    </div>
+    <div class="ad-btn">Получить →</div>
+  </div>
 </div>
 
 <div class="tag" style="margin-bottom:1rem">// сценарии демонстрации</div>

