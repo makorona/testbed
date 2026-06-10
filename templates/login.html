@@ -1,68 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Вход — SessionLab{% endblock %}
-{% block content %}
+{% block title %}Вход — PULSE{% endblock %}
+{% block head %}
 <style>
-.auth-wrap {
-  min-height:calc(100vh - 120px);
-  display:flex; align-items:center; justify-content:center;
-}
-.auth-box { width:100%; max-width:400px; }
-.auth-title {
-  font-family:var(--mono); font-size:1.4rem; font-weight:700;
-  color:#e8f0f8; margin-bottom:0.4rem;
-}
-.auth-sub { font-size:13px; color:var(--text3); margin-bottom:2rem; }
-.auth-form {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:4px; padding:2rem;
-}
-.auth-footer {
-  margin-top:1.2rem; font-size:12px;
-  color:var(--text3); text-align:center;
-}
-.error {
-  background:rgba(255,68,68,0.07); border:1px solid rgba(255,68,68,0.3);
-  border-radius:2px; padding:0.7rem 1rem;
-  font-family:var(--mono); font-size:12px; color:var(--red);
-  margin-bottom:1.2rem;
-}
-.info {
-  background:rgba(0,212,255,0.04); border:1px solid rgba(0,212,255,0.12);
-  border-radius:2px; padding:0.8rem 1rem;
-  font-family:var(--mono); font-size:11px; color:var(--text3);
-  margin-top:1.4rem; line-height:1.7;
-}
-.info b { color:var(--accent); font-weight:500; }
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.box{width:100%;max-width:380px}
+.box .logo{font-family:var(--disp);font-weight:700;font-size:1.8rem;text-align:center}
+.box .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.beat{height:4px;width:60px;background:var(--grad);border-radius:3px;margin:.3rem auto 1.8rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.8rem}
+.h{font-family:var(--disp);font-weight:500;font-size:1.15rem;margin-bottom:1.3rem}
+.err{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:var(--bad);font-size:.85rem;padding:.7rem .9rem;border-radius:10px;margin-bottom:1.1rem}
+.alt{text-align:center;margin-top:1.2rem;font-size:.88rem;color:var(--muted)}
+.alt a{color:var(--brand);font-weight:600}
 </style>
-<div class="auth-wrap">
-  <div class="auth-box">
-    <div class="tag">// аутентификация</div>
-    <div class="auth-title">Вход в систему</div>
-    <div class="auth-sub">Учебная среда Session Hijacking Lab</div>
-    {% if error %}
-    <div class="error">⚠ {{ error }}</div>
-    {% endif %}
-    <div class="auth-form">
-      <form method="POST" action="/login">
-        <div class="form-group">
-          <label>Имя пользователя</label>
-          <input type="text" name="username" placeholder="введите логин" autocomplete="off" required>
-        </div>
-        <div class="form-group">
-          <label>Пароль</label>
-          <input type="password" name="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn btn-full">Войти →</button>
-      </form>
-    </div>
-    <div class="auth-footer">
-      Нет аккаунта? <a href="/register">Создать</a>
-    </div>
-    <div class="info">
-      <b>// лабораторная среда</b><br>
-      Токен привязывается к IP и User-Agent.<br>
-      Использование с другого устройства — детектируется.
-    </div>
+{% endblock %}
+{% block body %}
+<div class="auth"><div class="box">
+  <div class="logo">PULSE<b>.</b></div><div class="beat"></div>
+  <div class="card">
+    <div class="h">С возвращением</div>
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    <form method="POST" action="/login">
+      <div class="field"><label>Имя пользователя</label>
+        <input name="username" placeholder="username" autocomplete="off" required></div>
+      <div class="field"><label>Пароль</label>
+        <input type="password" name="password" placeholder="••••••••" required></div>
+      <button class="btn" style="width:100%">Войти</button>
+    </form>
   </div>
-</div>
+  <div class="alt">Нет аккаунта? <a href="/register">Зарегистрироваться</a></div>
+</div></div>
 {% endblock %}

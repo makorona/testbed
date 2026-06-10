@@ -3,113 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}SessionLab{% endblock %}</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<title>{% block title %}PULSE{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:      #0a0c0f;
-  --bg2:     #0f1318;
-  --bg3:     #141920;
-  --border:  #1e2730;
-  --border2: #253040;
-  --text:    #c8d4e0;
-  --text2:   #7a8fa0;
-  --text3:   #4a5f70;
-  --accent:  #00d4ff;
-  --green:   #00e676;
-  --red:     #ff4444;
-  --yellow:  #ffcc00;
-  --mono: 'JetBrains Mono', monospace;
-  --sans: 'Inter', sans-serif;
+:root{
+  --bg:#0d0d12; --surface:#15151d; --surface2:#1c1c27; --line:#272734;
+  --text:#e9e9f0; --muted:#8a8a9c; --dim:#55556a;
+  --brand:#ff3d77; --brand2:#8b5cff;
+  --ok:#22c55e; --warn:#f5b301; --bad:#ff4d4d;
+  --grad:linear-gradient(120deg,var(--brand),var(--brand2));
+  --disp:'Space Grotesk',sans-serif; --body:'Inter',sans-serif;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  min-height: 100vh;
-  line-height: 1.6;
-}
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);
-  pointer-events:none; z-index:9999;
-}
-nav {
-  border-bottom:1px solid var(--border);
-  padding:0 2rem; height:52px;
-  display:flex; align-items:center; justify-content:space-between;
-  background:var(--bg2); position:sticky; top:0; z-index:100;
-}
-.nav-logo {
-  font-family:var(--mono); font-size:13px; font-weight:700;
-  color:var(--accent); letter-spacing:0.05em; text-decoration:none;
-}
-.nav-logo span { color:var(--text3); }
-.nav-links { display:flex; gap:1.5rem; align-items:center; }
-.nav-links a {
-  font-family:var(--mono); font-size:11px; color:var(--text2);
-  text-decoration:none; letter-spacing:0.08em; text-transform:uppercase;
-  transition:color 0.2s;
-}
-.nav-links a:hover { color:var(--accent); }
-.status-dot {
-  width:6px; height:6px; background:var(--green); border-radius:50%;
-  display:inline-block; margin-right:6px;
-  animation:pulse 2s infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-main { padding:3rem 2rem; max-width:1100px; margin:0 auto; }
-.tag {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.1em;
-  text-transform:uppercase; color:var(--text3); margin-bottom:0.5rem;
-}
-.card {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:4px; padding:1.5rem;
-}
-.btn {
-  font-family:var(--mono); font-size:12px; font-weight:500;
-  letter-spacing:0.08em; text-transform:uppercase;
-  padding:0.6rem 1.4rem; border:1px solid var(--accent);
-  background:transparent; color:var(--accent); cursor:pointer;
-  transition:all 0.2s; text-decoration:none; display:inline-block;
-  border-radius:2px;
-}
-.btn:hover { background:var(--accent); color:var(--bg); }
-.btn-muted { border-color:var(--border2); color:var(--text2); }
-.btn-muted:hover { background:var(--border2); color:var(--text); }
-.btn-danger { border-color:var(--red); color:var(--red); }
-.btn-danger:hover { background:var(--red); color:var(--bg); }
-.btn-full { width:100%; text-align:center; }
-input {
-  width:100%; background:var(--bg3); border:1px solid var(--border2);
-  color:var(--text); font-family:var(--mono); font-size:13px;
-  padding:0.65rem 0.9rem; border-radius:2px; outline:none;
-  transition:border-color 0.2s;
-}
-input:focus { border-color:var(--accent); }
-input::placeholder { color:var(--text3); }
-label {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.1em;
-  text-transform:uppercase; color:var(--text3);
-  display:block; margin-bottom:0.4rem;
-}
-.form-group { margin-bottom:1.2rem; }
-a { color:var(--accent); text-decoration:none; }
-a:hover { text-decoration:underline; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;line-height:1.55}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:230px 1fr;gap:0;min-height:100vh}
+@media(max-width:720px){.wrap{grid-template-columns:1fr}}
+
+/* sidebar */
+.side{border-right:1px solid var(--line);padding:1.5rem 1rem;position:sticky;top:0;height:100vh}
+@media(max-width:720px){.side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}}
+.logo{font-family:var(--disp);font-weight:700;font-size:1.5rem;letter-spacing:-.02em;display:flex;align-items:center;gap:.1rem;margin-bottom:.2rem}
+.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pulse-line{height:3px;width:42px;background:var(--grad);border-radius:2px;margin-bottom:1.8rem;position:relative;overflow:hidden}
+.pulse-line::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.6);width:12px;animation:slide 2.4s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-14px)}100%{transform:translateX(46px)}}
+.nav{display:flex;flex-direction:column;gap:.2rem}
+.nav a{display:flex;align-items:center;gap:.75rem;padding:.7rem .85rem;border-radius:10px;color:var(--muted);font-weight:500;font-size:.95rem;transition:.15s}
+.nav a:hover{background:var(--surface);color:var(--text)}
+.nav a.active{background:var(--surface2);color:var(--text)}
+.nav .ico{width:20px;text-align:center;font-size:1.05rem}
+.nav .badge{margin-left:auto;background:var(--brand);color:#fff;font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:10px}
+.side-foot{position:absolute;bottom:1.2rem;left:1rem;right:1rem}
+@media(max-width:720px){.side-foot{position:static;margin-top:1rem}}
+.logout{display:block;text-align:center;padding:.6rem;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:.85rem;font-weight:500;transition:.15s}
+.logout:hover{border-color:var(--bad);color:var(--bad)}
+
+/* main column */
+.main{padding:0}
+.topbar{padding:1.1rem 1.5rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(13,13,18,.85);backdrop-filter:blur(10px);z-index:5;font-family:var(--disp);font-weight:500;font-size:1.05rem}
+.col{padding:1.5rem}
+
+.btn{font-family:var(--body);font-weight:600;font-size:.9rem;padding:.6rem 1.3rem;border:none;border-radius:10px;background:var(--grad);color:#fff;cursor:pointer;transition:.15s}
+.btn:hover{filter:brightness(1.1)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn-ghost:hover{background:var(--surface);filter:none}
+input,textarea{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:var(--body);font-size:.95rem;padding:.7rem .9rem;border-radius:10px;outline:none;transition:.15s}
+input:focus,textarea:focus{border-color:var(--brand2)}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.4rem;font-weight:500}
+.field{margin-bottom:1rem}
 </style>
 {% block head %}{% endblock %}
 </head>
 <body>
-<nav>
-  <a class="nav-logo" href="/">[<span>//</span>] SessionLab</a>
-  <div class="nav-links">
-    <span><span class="status-dot"></span>online</span>
-    {% block nav_extra %}{% endblock %}
-  </div>
-</nav>
-<main>{% block content %}{% endblock %}</main>
+{% block body %}{% endblock %}
 </body>
 </html>

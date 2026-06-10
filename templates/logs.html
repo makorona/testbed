@@ -1,101 +1,82 @@
-{% extends "base.html" %}
-{% block title %}Логи — SessionLab{% endblock %}
-{% block nav_extra %}
-  <a href="/dashboard">Dashboard</a>
-  <a href="/logout">Выйти</a>
-{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Логи детектора</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-.logs-header {
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border);
-}
-.logs-title { font-family:var(--mono); font-size:1.2rem; font-weight:700; color:#e8f0f8; }
-.filters { display:flex; gap:0.5rem; margin-bottom:1.5rem; }
-.fbtn {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.08em;
-  text-transform:uppercase; padding:0.3rem 0.9rem;
-  border:1px solid var(--border2); background:transparent;
-  color:var(--text3); cursor:pointer; border-radius:2px; transition:all 0.2s;
-}
-.fbtn.active, .fbtn:hover { border-color:var(--accent); color:var(--accent); }
-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
-th {
-  text-align:left; padding:0.6rem 1rem;
-  font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
-  color:var(--text3); border-bottom:1px solid var(--border);
-  background:var(--bg2);
-}
-td { padding:0.65rem 1rem; border-bottom:1px solid var(--border); color:var(--text2); vertical-align:middle; }
-tr:hover td { background:var(--bg2); }
-.badge {
-  display:inline-block; padding:2px 8px; border-radius:2px;
-  font-size:10px; font-weight:500; letter-spacing:0.05em;
-}
-.b-ok    { background:rgba(0,230,118,0.1); color:var(--green); border:1px solid rgba(0,230,118,0.2); }
-.b-alert { background:rgba(255,204,0,0.1); color:var(--yellow); border:1px solid rgba(255,204,0,0.2); }
-.b-block { background:rgba(255,68,68,0.1); color:var(--red); border:1px solid rgba(255,68,68,0.2); }
-.empty { text-align:center; padding:3rem; color:var(--text3); font-family:var(--mono); font-size:12px; }
-.ua-cell { max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+:root{--bg:#070809;--surf:#0e1013;--surf2:#13161a;--line:#1e2228;--text:#c4ccd4;--muted:#6b7680;--dim:#454e57;--red:#ff4444;--green:#00e676;--yellow:#ffcc00;--cyan:#00d4ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:999}
+.bar{border-bottom:1px solid var(--line);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;background:var(--surf)}
+.brand{color:var(--cyan);font-weight:700;letter-spacing:.05em}
+.links a{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:1.2rem}
+.links a:hover{color:var(--cyan)}
+.wrap{max-width:1040px;margin:0 auto;padding:1.8rem 1.5rem}
+.eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
+.title{font-size:1.2rem;font-weight:700;margin-bottom:.3rem}
+.prot{font-size:11px;color:var(--muted);margin-bottom:1.3rem}
+.prot b{color:{% if protection %}var(--green){% else %}var(--yellow){% endif %}}
+.filters{display:flex;gap:.4rem;margin-bottom:1.2rem}
+.f{font-family:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:4px;cursor:pointer}
+.f.active,.f:hover{border-color:var(--cyan);color:var(--cyan)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:.5rem .7rem;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);background:var(--surf)}
+td{padding:.55rem .7rem;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:middle}
+tr:hover td{background:var(--surf)}
+.evt{color:var(--text)}
+.b{display:inline-block;padding:1px 7px;border-radius:4px;font-size:9px;font-weight:700}
+.b.ok{background:rgba(0,230,118,.12);color:var(--green)}
+.b.alert{background:rgba(255,204,0,.12);color:var(--yellow)}
+.b.block{background:rgba(255,68,68,.12);color:var(--red)}
+.ua{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;padding:3rem;color:var(--dim)}
 </style>
+</head>
+<body>
+<div class="bar">
+  <span class="brand">▸ DETECTOR LOGS</span>
+  <span class="links"><a href="/attacker">C2 panel</a><a href="/feed">PULSE</a></span>
+</div>
+<div class="wrap">
+  <div class="eyebrow">мониторинг сессий</div>
+  <div class="title">Журнал детектора аномалий</div>
+  <div class="prot">Защита: <b>{% if protection %}ВКЛ{% else %}ВЫКЛ{% endif %}</b></div>
 
-<div class="logs-header">
-  <div>
-    <div class="tag">// мониторинг</div>
-    <div class="logs-title">Журнал сессий</div>
+  <div class="filters">
+    <button class="f active" onclick="flt('all',this)">Все</button>
+    <button class="f" onclick="flt('OK',this)">OK</button>
+    <button class="f" onclick="flt('ALERT',this)">Alert</button>
+    <button class="f" onclick="flt('BLOCK',this)">Block</button>
   </div>
-  <a href="/dashboard" class="btn btn-muted">← Назад</a>
+
+  <table>
+    <thead><tr><th>#</th><th>Юзер</th><th>Событие</th><th>IP</th><th>User-Agent</th><th>Флаги</th><th>Статус</th><th>Время</th></tr></thead>
+    <tbody id="tb">
+    {% if logs %}{% for l in logs %}
+      <tr data-a="{{ l.action }}">
+        <td style="color:var(--dim)">{{ l.id }}</td>
+        <td class="evt">{{ l.username }}</td>
+        <td>{{ l.event }}</td>
+        <td>{{ l.ip }}</td>
+        <td class="ua" title="{{ l.user_agent }}">{{ l.user_agent[:32] if l.user_agent else '—' }}</td>
+        <td style="color:var(--dim);font-size:10px">{{ l.flags or '—' }}</td>
+        <td>{% if l.action=='OK' %}<span class="b ok">OK</span>{% elif l.action=='ALERT' %}<span class="b alert">ALERT</span>{% else %}<span class="b block">BLOCK</span>{% endif %}</td>
+        <td style="color:var(--dim)">{{ l.ts }}</td>
+      </tr>
+    {% endfor %}{% else %}
+      <tr><td colspan="8" class="empty">Логов пока нет</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
 </div>
-
-<div class="filters">
-  <button class="fbtn active" onclick="filter('all',this)">Все</button>
-  <button class="fbtn" onclick="filter('OK',this)">OK</button>
-  <button class="fbtn" onclick="filter('ALERT',this)">Alert</button>
-  <button class="fbtn" onclick="filter('BLOCK',this)">Block</button>
-</div>
-
-<table>
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Пользователь</th>
-      <th>IP</th>
-      <th>User-Agent</th>
-      <th>Флаги</th>
-      <th>Статус</th>
-      <th>Время</th>
-    </tr>
-  </thead>
-  <tbody id="tb">
-  {% if logs %}
-    {% for l in logs %}
-    <tr data-a="{{ l.action }}">
-      <td style="color:var(--text3)">{{ l.id }}</td>
-      <td style="color:var(--text)">{{ l.username }}</td>
-      <td>{{ l.ip }}</td>
-      <td class="ua-cell" title="{{ l.user_agent }}">{{ l.user_agent[:35] }}{% if l.user_agent and l.user_agent|length > 35 %}...{% endif %}</td>
-      <td style="color:var(--text3);font-size:11px">{{ l.flags or '—' }}</td>
-      <td>
-        {% if l.action == 'OK' %}<span class="badge b-ok">OK</span>
-        {% elif l.action == 'ALERT' %}<span class="badge b-alert">ALERT</span>
-        {% else %}<span class="badge b-block">BLOCK</span>{% endif %}
-      </td>
-      <td style="color:var(--text3)">{{ l.timestamp }}</td>
-    </tr>
-    {% endfor %}
-  {% else %}
-    <tr><td colspan="7" class="empty">Логов пока нет — войдите в систему</td></tr>
-  {% endif %}
-  </tbody>
-</table>
-
 <script>
-function filter(t, btn) {
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('#tb tr[data-a]').forEach(r => {
-    r.style.display = (t === 'all' || r.dataset.a === t) ? '' : 'none';
-  });
+function flt(t,btn){
+  document.querySelectorAll('.f').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('#tb tr[data-a]').forEach(r=>r.style.display=(t==='all'||r.dataset.a===t)?'':'none');
 }
 </script>
-{% endblock %}
+</body>
+</html>

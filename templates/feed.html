@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Лента — PULSE{% endblock %}
+{% block head %}
+<style>
+.profile-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.3rem;margin-bottom:1.3rem}
+.pc-top{display:flex;align-items:center;gap:.9rem;margin-bottom:.9rem}
+.avatar{width:54px;height:54px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:1.4rem;color:#fff;flex-shrink:0}
+.pc-name{font-family:var(--disp);font-weight:700;font-size:1.1rem}
+.pc-handle{color:var(--muted);font-size:.85rem}
+.pc-bio{font-size:.9rem;color:var(--text);margin-bottom:.9rem}
+.pc-stats{display:flex;gap:1.5rem;font-size:.85rem;color:var(--muted)}
+.pc-stats b{color:var(--text);font-family:var(--disp)}
+.compose{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.1rem;margin-bottom:1.3rem}
+.compose textarea{resize:none;border:none;background:transparent;padding:.4rem 0;font-size:1rem;min-height:48px}
+.compose textarea:focus{border:none}
+.compose-bar{display:flex;justify-content:flex-end;border-top:1px solid var(--line);padding-top:.7rem;margin-top:.2rem}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.3rem;margin-bottom:.9rem}
+.post.spam{border-color:rgba(255,77,77,.4)}
+.post-head{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem}
+.post-av{width:38px;height:38px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:.95rem;color:#fff}
+.post-name{font-weight:600;font-size:.92rem}
+.post-meta{color:var(--dim);font-size:.78rem}
+.post-body{font-size:.96rem;line-height:1.5}
+.spam-tag{display:inline-block;background:rgba(255,77,77,.15);color:var(--bad);font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:8px;margin-left:.4rem}
+.post-actions{display:flex;gap:1.5rem;margin-top:.8rem;color:var(--dim);font-size:.85rem}
+.session-chip{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;margin-bottom:1.3rem}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+</style>
+{% endblock %}
+{% block body %}
+<div class="wrap">
+  <aside class="side">
+    <div class="logo">PULSE<b>.</b></div>
+    <div class="pulse-line"></div>
+    <nav class="nav">
+      <a href="/feed" class="active"><span class="ico">⌂</span> Лента</a>
+      <a href="/messages"><span class="ico">✉</span> Сообщения{% if unread %}<span class="badge">{{ unread }}</span>{% endif %}</a>
+      <a href="/settings"><span class="ico">⚙</span> Настройки</a>
+    </nav>
+    <div class="side-foot">
+      <a href="/logout" class="logout">Выйти</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">Лента</div>
+    <div class="col">
+      <!-- индикатор сессии (служебный, для демонстрации детектора) -->
+      <div class="session-chip">
+        <span class="dot {% if res.action=='BLOCK' %}bad{% elif res.action=='ALERT' %}warn{% else %}ok{% endif %}"></span>
+        Сессия: {{ session_ip }} · {{ res.action }}{% if res.flags %} · {{ res.flags|join(', ') }}{% endif %}
+      </div>
+
+      <div class="profile-card">
+        <div class="pc-top">
+          <div class="avatar">{{ me.avatar }}</div>
+          <div>
+            <div class="pc-name">{{ me.display_name }}</div>
+            <div class="pc-handle">@{{ me.username }}</div>
+          </div>
+        </div>
+        <div class="pc-bio">{{ me.bio }}</div>
+        <div class="pc-stats"><span><b>{{ posts|length }}</b> постов</span><span><b>248</b> подписчиков</span><span><b>180</b> подписок</span></div>
+      </div>
+
+      <form class="compose" method="POST" action="/post">
+        <textarea name="content" placeholder="Что нового, {{ me.display_name }}?" required></textarea>
+        <div class="compose-bar"><button class="btn">Опубликовать</button></div>
+      </form>
+
+      {% for p in posts %}
+      <div class="post {% if p.spam %}spam{% endif %}">
+        <div class="post-head">
+          <div class="post-av">{{ me.avatar }}</div>
+          <div>
+            <div class="post-name">{{ me.display_name }}{% if p.spam %}<span class="spam-tag">подозрительный пост</span>{% endif %}</div>
+            <div class="post-meta">@{{ me.username }} · {{ p.ts }}</div>
+          </div>
+        </div>
+        <div class="post-body">{{ p.content }}</div>
+        <div class="post-actions"><span>♡ нравится</span><span>↻ репост</span><span>↩ ответить</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+{% endblock %}

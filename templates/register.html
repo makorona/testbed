@@ -1,87 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Регистрация — SessionLab{% endblock %}
-{% block content %}
+{% block title %}Регистрация — PULSE{% endblock %}
+{% block head %}
 <style>
-.auth-wrap {
-  min-height:calc(100vh - 120px);
-  display:flex; align-items:center; justify-content:center;
-}
-.auth-box { width:100%; max-width:400px; }
-.auth-title {
-  font-family:var(--mono); font-size:1.4rem; font-weight:700;
-  color:#e8f0f8; margin-bottom:0.4rem;
-}
-.auth-sub { font-size:13px; color:var(--text3); margin-bottom:2rem; }
-.auth-form {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:4px; padding:2rem;
-}
-.auth-footer {
-  margin-top:1.2rem; font-size:12px;
-  color:var(--text3); text-align:center;
-}
-.error {
-  background:rgba(255,68,68,0.07); border:1px solid rgba(255,68,68,0.3);
-  border-radius:2px; padding:0.7rem 1rem;
-  font-family:var(--mono); font-size:12px; color:var(--red);
-  margin-bottom:1.2rem;
-}
-.strength-bar {
-  height:3px; background:var(--border);
-  border-radius:2px; margin-top:0.5rem; overflow:hidden;
-}
-.strength-fill {
-  height:100%; width:0%; border-radius:2px;
-  transition:width 0.3s, background 0.3s;
-}
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.box{width:100%;max-width:400px}
+.box .logo{font-family:var(--disp);font-weight:700;font-size:1.8rem;text-align:center}
+.box .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.beat{height:4px;width:60px;background:var(--grad);border-radius:3px;margin:.3rem auto 1.8rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.8rem}
+.h{font-family:var(--disp);font-weight:500;font-size:1.15rem;margin-bottom:.3rem}
+.sub{font-size:.82rem;color:var(--muted);margin-bottom:1.3rem}
+.err{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:var(--bad);font-size:.85rem;padding:.7rem .9rem;border-radius:10px;margin-bottom:1.1rem}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.alt{text-align:center;margin-top:1.2rem;font-size:.88rem;color:var(--muted)}
+.alt a{color:var(--brand);font-weight:600}
 </style>
-<div class="auth-wrap">
-  <div class="auth-box">
-    <div class="tag">// новый аккаунт</div>
-    <div class="auth-title">Регистрация</div>
-    <div class="auth-sub">Создайте тестовый аккаунт для лабораторной работы</div>
-    {% if error %}
-    <div class="error">⚠ {{ error }}</div>
-    {% endif %}
-    <div class="auth-form">
-      <form method="POST" action="/register">
-        <div class="form-group">
-          <label>Имя пользователя</label>
-          <input type="text" name="username" placeholder="минимум 3 символа" autocomplete="off" required>
-        </div>
-        <div class="form-group">
-          <label>Пароль</label>
-          <input type="password" name="password" id="pw"
-                 placeholder="минимум 6 символов" required
-                 oninput="checkStrength(this.value)">
-          <div class="strength-bar">
-            <div class="strength-fill" id="sfill"></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Подтверждение пароля</label>
-          <input type="password" name="password2" placeholder="повторите пароль" required>
-        </div>
-        <button type="submit" class="btn btn-full">Создать аккаунт →</button>
-      </form>
-    </div>
-    <div class="auth-footer">
-      Уже есть аккаунт? <a href="/login">Войти</a>
-    </div>
+{% endblock %}
+{% block body %}
+<div class="auth"><div class="box">
+  <div class="logo">PULSE<b>.</b></div><div class="beat"></div>
+  <div class="card">
+    <div class="h">Создать аккаунт</div>
+    <div class="sub">Это займёт меньше минуты</div>
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    <form method="POST" action="/register">
+      <div class="field"><label>Отображаемое имя</label>
+        <input name="display_name" placeholder="Маргулан" required></div>
+      <div class="field"><label>Имя пользователя</label>
+        <input name="username" placeholder="username" autocomplete="off" required></div>
+      <div class="row">
+        <div class="field"><label>Email</label>
+          <input type="email" name="email" placeholder="you@mail.com" required></div>
+        <div class="field"><label>Телефон</label>
+          <input name="phone" placeholder="+7 700 000 0000" required></div>
+      </div>
+      <div class="field"><label>Пароль</label>
+        <input type="password" name="password" placeholder="минимум 6 символов" required></div>
+      <button class="btn" style="width:100%">Зарегистрироваться</button>
+    </form>
   </div>
-</div>
-<script>
-function checkStrength(v) {
-  const f = document.getElementById('sfill');
-  let s = 0;
-  if (v.length >= 6)  s++;
-  if (v.length >= 10) s++;
-  if (/[0-9]/.test(v)) s++;
-  if (/[^a-zA-Z0-9]/.test(v)) s++;
-  const c = ['#ff4444','#ffcc00','#00e676','#00d4ff'];
-  const w = ['25%','50%','75%','100%'];
-  f.style.width      = s ? w[s-1] : '0%';
-  f.style.background = s ? c[s-1] : 'transparent';
-}
-</script>
+  <div class="alt">Уже есть аккаунт? <a href="/login">Войти</a></div>
+</div></div>
 {% endblock %}

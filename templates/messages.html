@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Сообщения — PULSE{% endblock %}
+{% block head %}
+<style>
+.dm{display:flex;gap:.8rem;padding:1rem 1.2rem;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:.8rem}
+.dm-av{width:42px;height:42px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;color:var(--muted);flex-shrink:0}
+.dm-name{font-weight:600;font-size:.92rem;margin-bottom:.2rem}
+.dm-text{font-size:.92rem;color:var(--text)}
+.dm-time{font-size:.75rem;color:var(--dim);margin-top:.3rem}
+.lock{font-size:.78rem;color:var(--muted);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+</style>
+{% endblock %}
+{% block body %}
+<div class="wrap">
+  <aside class="side">
+    <div class="logo">PULSE<b>.</b></div>
+    <div class="pulse-line"></div>
+    <nav class="nav">
+      <a href="/feed"><span class="ico">⌂</span> Лента</a>
+      <a href="/messages" class="active"><span class="ico">✉</span> Сообщения</a>
+      <a href="/settings"><span class="ico">⚙</span> Настройки</a>
+    </nav>
+    <div class="side-foot"><a href="/logout" class="logout">Выйти</a></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">Личные сообщения</div>
+    <div class="col">
+      <div class="lock">🔒 Только вы можете читать эти сообщения</div>
+      {% for m in msgs %}
+      <div class="dm">
+        <div class="dm-av">{{ m.sender[0] }}</div>
+        <div>
+          <div class="dm-name">{{ m.sender }}</div>
+          <div class="dm-text">{{ m.content }}</div>
+          <div class="dm-time">{{ m.ts }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+{% endblock %}

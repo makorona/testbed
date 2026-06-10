@@ -1,110 +1,32 @@
 {% extends "base.html" %}
-{% block title %}SessionLab — Главная{% endblock %}
-{% block content %}
+{% block title %}PULSE — социальная сеть{% endblock %}
+{% block head %}
 <style>
-.hero {
-  min-height:calc(100vh - 120px);
-  display:flex; flex-direction:column; justify-content:center;
-  padding:4rem 0;
-}
-.hero-eyebrow {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.15em;
-  text-transform:uppercase; color:var(--accent); margin-bottom:1.5rem;
-  display:flex; align-items:center; gap:0.6rem;
-}
-.hero-eyebrow::before { content:''; width:24px; height:1px; background:var(--accent); }
-h1 {
-  font-family:var(--mono); font-size:clamp(2rem,5vw,3.4rem);
-  font-weight:700; line-height:1.1; color:#e8f0f8;
-  margin-bottom:1.5rem; letter-spacing:-0.02em;
-}
-h1 .ac { color:var(--accent); }
-h1 .dim { color:var(--text3); }
-.hero-desc {
-  max-width:520px; font-size:15px; color:var(--text2);
-  line-height:1.8; margin-bottom:2.5rem;
-}
-.hero-cta { display:flex; gap:1rem; flex-wrap:wrap; }
-.stats {
-  display:grid; grid-template-columns:repeat(3,1fr);
-  gap:1px; margin-top:5rem;
-  background:var(--border); border:1px solid var(--border);
-  border-radius:4px; overflow:hidden;
-}
-.stat {
-  background:var(--bg2); padding:1.4rem 1.5rem;
-}
-.stat-num {
-  font-family:var(--mono); font-size:1.9rem; font-weight:700;
-  color:var(--accent); line-height:1; margin-bottom:0.4rem;
-}
-.stat-lbl { font-size:12px; color:var(--text3); line-height:1.4; }
-.attacks {
-  margin-top:4rem; display:grid; grid-template-columns:repeat(2,1fr); gap:1rem;
-}
-.attack {
-  background:var(--bg2); border:1px solid var(--border);
-  border-left:3px solid var(--border2); padding:1.1rem 1.4rem;
-  border-radius:2px; transition:border-left-color 0.2s;
-}
-.attack:hover { border-left-color:var(--accent); }
-.attack-name {
-  font-family:var(--mono); font-size:12px; font-weight:500;
-  color:var(--text); margin-bottom:0.3rem;
-}
-.attack-desc { font-size:12px; color:var(--text3); line-height:1.6; }
-.section-label {
-  font-family:var(--mono); font-size:11px; letter-spacing:0.12em;
-  text-transform:uppercase; color:var(--text3);
-  margin-bottom:1.2rem; padding-bottom:0.5rem;
-  border-bottom:1px solid var(--border);
-}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+.glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,255,.18),transparent 60%);top:-150px;filter:blur(20px)}
+.glow2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,61,119,.15),transparent 60%);bottom:-150px;right:-100px;filter:blur(20px)}
+.hero-logo{font-family:var(--disp);font-weight:700;font-size:4rem;letter-spacing:-.03em;margin-bottom:.5rem;position:relative}
+.hero-logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.beat{height:5px;width:90px;background:var(--grad);border-radius:3px;margin:0 auto 2rem;position:relative;overflow:hidden}
+.beat::after{content:'';position:absolute;inset:0;width:20px;background:rgba(255,255,255,.7);animation:slide2 2.2s ease-in-out infinite}
+@keyframes slide2{0%{transform:translateX(-22px)}100%{transform:translateX(98px)}}
+.tag{font-size:1.3rem;color:var(--muted);max-width:440px;margin-bottom:2.5rem;position:relative}
+.tag b{color:var(--text);font-weight:600}
+.cta{display:flex;gap:1rem;position:relative}
+.cta .btn{padding:.85rem 2rem;font-size:1rem}
+.foot-note{position:absolute;bottom:1.5rem;font-size:.75rem;color:var(--dim);font-family:var(--disp)}
 </style>
+{% endblock %}
+{% block body %}
 <div class="hero">
-  <div class="hero-eyebrow">дипломный проект — информационная безопасность</div>
-  <h1>Session<span class="ac">Hijack</span><br><span class="dim">Research</span> Lab</h1>
-  <p class="hero-desc">
-    Учебная среда для исследования атак на сессионные токены в веб-приложениях.
-    Моделирование, обнаружение и предотвращение Session Hijacking.
-  </p>
-  <div class="hero-cta">
+  <div class="glow"></div><div class="glow2"></div>
+  <div class="hero-logo">PULSE<b>.</b></div>
+  <div class="beat"></div>
+  <div class="tag">Делись моментами. Общайся с близкими. <b>Будь на связи.</b></div>
+  <div class="cta">
     <a href="/register" class="btn">Создать аккаунт</a>
-    <a href="/login" class="btn btn-muted">Войти</a>
+    <a href="/login" class="btn btn-ghost">Войти</a>
   </div>
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-num">3</div>
-      <div class="stat-lbl">сценария атаки для демонстрации</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">JWT</div>
-      <div class="stat-lbl">токены с привязкой к IP и устройству</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">live</div>
-      <div class="stat-lbl">детектор аномалий в реальном времени</div>
-    </div>
-  </div>
-  <div style="margin-top:4rem">
-    <div class="section-label">Векторы атак</div>
-    <div class="attacks">
-      <div class="attack">
-        <div class="attack-name">Token Replay</div>
-        <div class="attack-desc">Повторное использование перехваченного токена с другого устройства</div>
-      </div>
-      <div class="attack">
-        <div class="attack-name">IP Spoofing</div>
-        <div class="attack-desc">Подмена IP адреса при использовании украденной сессии</div>
-      </div>
-      <div class="attack">
-        <div class="attack-name">Session Fixation</div>
-        <div class="attack-desc">Принудительная установка известного session ID до аутентификации</div>
-      </div>
-      <div class="attack">
-        <div class="attack-name">Device Change</div>
-        <div class="attack-desc">Использование токена с другого браузера или User-Agent</div>
-      </div>
-    </div>
-  </div>
+  <div class="foot-note">учебная среда — дипломный проект по информационной безопасности</div>
 </div>
 {% endblock %}

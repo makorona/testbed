@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Настройки — PULSE{% endblock %}
+{% block head %}
+<style>
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.4rem;margin-bottom:1rem}
+.sec-h{font-family:var(--disp);font-weight:500;font-size:1rem;margin-bottom:1rem}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.k{font-size:.85rem;color:var(--muted)}
+.v{font-size:.92rem;font-weight:500}
+.v.danger{color:var(--bad)}
+.hint{font-size:.78rem;color:var(--dim);margin-top:1rem}
+</style>
+{% endblock %}
+{% block body %}
+<div class="wrap">
+  <aside class="side">
+    <div class="logo">PULSE<b>.</b></div>
+    <div class="pulse-line"></div>
+    <nav class="nav">
+      <a href="/feed"><span class="ico">⌂</span> Лента</a>
+      <a href="/messages"><span class="ico">✉</span> Сообщения</a>
+      <a href="/settings" class="active"><span class="ico">⚙</span> Настройки</a>
+    </nav>
+    <div class="side-foot"><a href="/logout" class="logout">Выйти</a></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">Настройки аккаунта</div>
+    <div class="col">
+      <div class="sec">
+        <div class="sec-h">Личные данные</div>
+        <div class="kv"><span class="k">Имя</span><span class="v">{{ me.display_name }}</span></div>
+        <div class="kv"><span class="k">Username</span><span class="v">@{{ me.username }}</span></div>
+        <div class="kv"><span class="k">Email</span><span class="v {% if 'evil.com' in me.email %}danger{% endif %}">{{ me.email }}</span></div>
+        <div class="kv"><span class="k">Телефон</span><span class="v">{{ me.phone }}</span></div>
+        <div class="kv"><span class="k">Дата регистрации</span><span class="v">{{ me.joined }}</span></div>
+      </div>
+      <div class="sec">
+        <div class="sec-h">Безопасность</div>
+        <div class="kv"><span class="k">Пароль</span><span class="v">••••••••</span></div>
+        <div class="kv"><span class="k">Двухфакторная аутентификация</span><span class="v" style="color:var(--ok)">включена</span></div>
+        <div class="hint">При смене email на восстановление аккаунта используется новый адрес.</div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

