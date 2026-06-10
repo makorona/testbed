@@ -3,3 +3,5 @@ __pycache__/
 venv/
 users.db
 .env
+.DS_Store
+**/.DS_Store
