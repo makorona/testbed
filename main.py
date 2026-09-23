@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-import jwt, datetime, hashlib, sqlite3, time, os
+import jwt, datetime, hashlib, sqlite3, time, os, secrets
 from collections import defaultdict
 
 app = FastAPI()
@@ -52,6 +52,18 @@ def get_conn():
         token TEXT, cookies TEXT, url TEXT,
         useragent TEXT, screen TEXT, language TEXT,
         ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+    # устройства, прошедшие подтверждение (2FA) хотя бы раз — им детектор доверяет
+    conn.execute("""CREATE TABLE IF NOT EXISTS trusted_devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT, fingerprint TEXT,
+        first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(username, fingerprint))""")
+    # симулированные коды подтверждения (ступенчатая 2FA) для CHALLENGE-действий
+    conn.execute("""CREATE TABLE IF NOT EXISTS challenges (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT, fingerprint TEXT, code TEXT,
+        event TEXT, verified INTEGER DEFAULT 0,
+        ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
     conn.commit()
     return conn
 
@@ -83,26 +95,88 @@ async def rate_limit(request: Request, call_next):
     request_counts[ip].append(now)
     return await call_next(request)
 
-# ── детектор аномалий ────────────────────────────────
+# ════════════════════════════════════════════════════
+#  ДЕТЕКТОР АНОМАЛИЙ — конвейер IPS
+#  Inspection (собрать ip/ua/jti) → Detection (сигнатуры ниже) →
+#  Decision (риск 0-100 → ALLOW/CHALLENGE/BLOCK) → Prevention (attacker_guard)
+# ════════════════════════════════════════════════════
+
+# вес каждой сигнатуры в итоговом риске (0-100)
+RULES = {
+    "IP_CHANGE":          40,   # IP запроса отличается от IP на момент логина
+    "DEVICE_CHANGE":      30,   # User-Agent отличается от того, что был при логине
+    "HIGH_VELOCITY":      35,   # слишком много запросов одним и тем же токеном за минуту
+    "TOKEN_REPLAY":       65,   # тот же токен только что использовался с другого ip/ua —
+                                # характерная картина одновременного использования украденной сессии
+}
+
+# рантайм-состояние детектора держим в памяти процесса (как это обычно делает
+# IPS/WAF — в проде это был бы Redis), а не в SQLite: это оперативные сигналы,
+# а не долгоживущие данные аккаунта
+token_activity = defaultdict(list)   # jti -> [timestamps запросов за последние 60с]
+last_seen = {}                       # jti -> {"ip":.., "ua":.., "ts":..}
+
+HIGH_VELOCITY_THRESHOLD = 20   # запросов/60с одним токеном
+REPLAY_WINDOW = 20             # секунд — окно "почти одновременного" использования токена
+                                # с другого ip/ua (не просто "в рамках одной сессии")
+
 def analyze(payload, ip, ua):
-    flags, risk = [], 0
+    jti = payload.get("jti", "")
+    now = time.time()
+    flags = []
+
     oip = payload.get("ip", "")
     oua = payload.get("ua", "")
     if oip and oip != ip:
-        flags.append("IP_CHANGE"); risk += 40
+        flags.append("IP_CHANGE")
     if oua and oua != ua:
-        flags.append("DEVICE_CHANGE"); risk += 30
-    return {
-        "risk": min(risk, 100),
-        "flags": flags,
-        "action": "BLOCK" if risk >= 60 else "ALERT" if risk >= 30 else "OK",
-    }
+        flags.append("DEVICE_CHANGE")
+
+    if jti:
+        token_activity[jti] = [t for t in token_activity[jti] if now - t < 60]
+        token_activity[jti].append(now)
+        if len(token_activity[jti]) > HIGH_VELOCITY_THRESHOLD:
+            flags.append("HIGH_VELOCITY")
+
+        prev = last_seen.get(jti)
+        if prev and (ip != prev["ip"] or ua != prev["ua"]) and now - prev["ts"] < REPLAY_WINDOW:
+            flags.append("TOKEN_REPLAY")
+        last_seen[jti] = {"ip": ip, "ua": ua, "ts": now}
+
+    risk = min(sum(RULES[f] for f in flags), 100)
+    action = "BLOCK" if risk >= 60 else "CHALLENGE" if risk >= 30 else "ALLOW"
+    return {"risk": risk, "flags": flags, "action": action}
 
 def log_event(conn, username, ip, ua, res, event):
     conn.execute(
         "INSERT INTO logs (username, ip, user_agent, action, flags, event) VALUES (?,?,?,?,?,?)",
         (username, ip, ua, res["action"], ", ".join(res["flags"]), event))
     conn.commit()
+
+# ── защита от подбора пароля (credential stuffing) ───
+failed_logins = defaultdict(list)   # username -> [timestamps неудачных попыток]
+CRED_STUFFING_THRESHOLD = 5
+CRED_STUFFING_WINDOW = 300  # 5 минут
+
+def register_failed_login(conn, username, ip, ua):
+    now = time.time()
+    failed_logins[username] = [t for t in failed_logins[username] if now - t < CRED_STUFFING_WINDOW]
+    failed_logins[username].append(now)
+    stuffing = len(failed_logins[username]) >= CRED_STUFFING_THRESHOLD
+    log_event(conn, username, ip, ua,
+              {"action": "BLOCK" if stuffing else "ALLOW",
+               "flags": ["CREDENTIAL_STUFFING"] if stuffing else []},
+              "login_failed")
+    return stuffing
+
+# ── доверенные устройства (снимают CHALLENGE после подтверждения) ─
+def device_fingerprint(username, ua):
+    return hashlib.sha256(f"{username}|{ua}".encode()).hexdigest()[:16]
+
+def is_trusted_device(conn, username, fp):
+    return conn.execute(
+        "SELECT 1 FROM trusted_devices WHERE username=? AND fingerprint=?",
+        (username, fp)).fetchone() is not None
 
 # ── авторизация: достаём токен из cookie или заголовка ─
 def get_session(request: Request):
@@ -156,20 +230,30 @@ async def login_page(request: Request):
 @app.post("/login")
 async def login(request: Request, username: str = Form(), password: str = Form()):
     conn = get_conn()
+    ip = get_real_ip(request)
+    ua = request.headers.get("user-agent", "")
     hashed = hashlib.sha256(password.encode()).hexdigest()
     user = conn.execute("SELECT * FROM users WHERE username=? AND password=?",
                         (username, hashed)).fetchone()
     if not user:
+        stuffing = register_failed_login(conn, username, ip, ua)
+        if stuffing and PROTECTION_ENABLED:
+            return templates.TemplateResponse(request, "login.html",
+                {"error": "Слишком много неудачных попыток входа. Попробуйте позже."})
         return templates.TemplateResponse(request, "login.html", {"error": "Неверный логин или пароль"})
-    ip = get_real_ip(request)
-    ua = request.headers.get("user-agent", "")
+    jti = secrets.token_hex(8)
     payload = {
-        "user_id": username, "ip": ip, "ua": ua,
+        "user_id": username, "ip": ip, "ua": ua, "jti": jti,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2),
     }
     token = jwt.encode(payload, SECRET, algorithm="HS256")
     res = analyze(payload, ip, ua)
     log_event(conn, username, ip, ua, res, "login")
+    # первое устройство пользователя считается доверенным автоматически
+    if not conn.execute("SELECT 1 FROM trusted_devices WHERE username=?", (username,)).fetchone():
+        conn.execute("INSERT OR IGNORE INTO trusted_devices (username, fingerprint) VALUES (?,?)",
+                     (username, device_fingerprint(username, ua)))
+        conn.commit()
     resp = RedirectResponse("/feed", status_code=302)
     # основной токен — защищён HttpOnly
     resp.set_cookie("token", token, httponly=True, samesite="lax", max_age=7200)
@@ -201,9 +285,14 @@ async def feed(request: Request):
     log_event(conn, payload["user_id"], ip, ua, res, "view_feed")
     posts = conn.execute("SELECT * FROM posts WHERE author=? ORDER BY id DESC", (payload["user_id"],)).fetchall()
     unread = conn.execute("SELECT COUNT(*) c FROM messages WHERE owner=? AND incoming=1", (payload["user_id"],)).fetchone()["c"]
+    # ждёт ли аккаунт подтверждения (2FA) для действия, инициированного с недоверенного устройства
+    pending_challenge = conn.execute(
+        "SELECT * FROM challenges WHERE username=? AND verified=0 ORDER BY id DESC LIMIT 1",
+        (payload["user_id"],)).fetchone()
     return templates.TemplateResponse(request, "feed.html", {
         "me": me, "posts": posts, "token": token,
         "session_ip": ip, "res": res, "unread": unread,
+        "pending_challenge": pending_challenge,
     })
 
 @app.post("/post")
@@ -240,6 +329,23 @@ async def settings_page(request: Request):
     res = analyze(payload, ip, ua)
     log_event(conn, payload["user_id"], ip, ua, res, "view_settings")
     return templates.TemplateResponse(request, "settings.html", {"me": me})
+
+# ── подтверждение кода (симулированная ступенчатая 2FA) ──
+@app.post("/api/verify-challenge")
+async def verify_challenge(request: Request, code: str = Form()):
+    payload, token = get_session(request)
+    if not payload:
+        return RedirectResponse("/login")
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT * FROM challenges WHERE username=? AND verified=0 ORDER BY id DESC LIMIT 1",
+        (payload["user_id"],)).fetchone()
+    if row and row["code"] == code:
+        conn.execute("INSERT OR IGNORE INTO trusted_devices (username, fingerprint) VALUES (?,?)",
+                     (payload["user_id"], row["fingerprint"]))
+        conn.execute("UPDATE challenges SET verified=1 WHERE id=?", (row["id"],))
+        conn.commit()
+    return RedirectResponse("/feed", status_code=302)
 
 # ════════════════════════════════════════════════════
 #  СИМУЛЯЦИЯ INFOSTEALER
@@ -284,7 +390,7 @@ async def attacker_panel(request: Request):
     })
 
 def attacker_guard(request: Request, event: str):
-    """Проверяет украденный токен, прогоняет через детектор, решает блокировать ли."""
+    """Прогоняет украденный токен через детектор и решает: ALLOW / CHALLENGE (2FA) / BLOCK."""
     payload, token = get_session(request)
     if not payload:
         return None, JSONResponse({"ok": False, "error": "Токен недействителен или истёк"}, status_code=401)
@@ -292,12 +398,29 @@ def attacker_guard(request: Request, event: str):
     res = analyze(payload, ip, ua)
     conn = get_conn()
     log_event(conn, payload["user_id"], ip, ua, res, event)
-    if PROTECTION_ENABLED and res["action"] != "OK":
+
+    if not PROTECTION_ENABLED or res["action"] == "ALLOW":
+        return payload, None
+
+    if res["action"] == "CHALLENGE":
+        fp = device_fingerprint(payload["user_id"], ua)
+        if is_trusted_device(conn, payload["user_id"], fp):
+            return payload, None
+        # устройство не доверено — выпускаем код подтверждения (видит только жертва в /feed)
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        conn.execute("INSERT INTO challenges (username, fingerprint, code, event) VALUES (?,?,?,?)",
+                     (payload["user_id"], fp, code, event))
+        conn.commit()
         return None, JSONResponse({
-            "ok": False, "blocked": True, "detector": res,
-            "message": "Действие заблокировано детектором аномалий",
+            "ok": False, "challenge_required": True, "detector": res,
+            "message": "Действие требует подтверждения (2FA) — код отправлен на доверенное устройство жертвы",
         }, status_code=403)
-    return payload, None
+
+    # BLOCK — доверие устройства не спасает: риск слишком высок (например TOKEN_REPLAY)
+    return None, JSONResponse({
+        "ok": False, "blocked": True, "detector": res,
+        "message": "Действие заблокировано детектором аномалий",
+    }, status_code=403)
 
 @app.post("/api/read-messages")
 async def api_read_messages(request: Request):

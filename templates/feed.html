@@ -26,6 +26,12 @@
 .session-chip{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;margin-bottom:1.3rem}
 .dot{width:7px;height:7px;border-radius:50%}
 .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+.challenge-card{background:var(--surface);border:1px solid var(--warn);border-radius:16px;padding:1.1rem 1.3rem;margin-bottom:1.3rem}
+.challenge-card .ct{font-family:var(--disp);font-weight:700;color:var(--warn);margin-bottom:.4rem}
+.challenge-card .cd{font-size:.85rem;color:var(--muted);margin-bottom:.8rem}
+.challenge-card .code{font-family:var(--disp);font-size:1.4rem;letter-spacing:.3em;color:var(--text);margin-bottom:.8rem}
+.challenge-card form{display:flex;gap:.6rem}
+.challenge-card input{width:auto;flex:1}
 </style>
 {% endblock %}
 {% block body %}
@@ -48,9 +54,21 @@
     <div class="col">
       <!-- индикатор сессии (служебный, для демонстрации детектора) -->
       <div class="session-chip">
-        <span class="dot {% if res.action=='BLOCK' %}bad{% elif res.action=='ALERT' %}warn{% else %}ok{% endif %}"></span>
+        <span class="dot {% if res.action=='BLOCK' %}bad{% elif res.action=='CHALLENGE' %}warn{% else %}ok{% endif %}"></span>
         Сессия: {{ session_ip }} · {{ res.action }}{% if res.flags %} · {{ res.flags|join(', ') }}{% endif %}
       </div>
+
+      {% if pending_challenge %}
+      <div class="challenge-card">
+        <div class="ct">🔐 Требуется подтверждение действия</div>
+        <div class="cd">С недоверенного устройства запрошено действие «{{ pending_challenge.event }}». Если это не вы — просто игнорируйте.</div>
+        <div class="code">{{ pending_challenge.code }}</div>
+        <form method="POST" action="/api/verify-challenge">
+          <input name="code" placeholder="Введите код для подтверждения устройства" maxlength="6">
+          <button class="btn">Подтвердить</button>
+        </form>
+      </div>
+      {% endif %}
 
       <div class="profile-card">
         <div class="pc-top">

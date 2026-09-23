@@ -47,8 +47,8 @@ tr:hover td{background:var(--surf)}
 
   <div class="filters">
     <button class="f active" onclick="flt('all',this)">Все</button>
-    <button class="f" onclick="flt('OK',this)">OK</button>
-    <button class="f" onclick="flt('ALERT',this)">Alert</button>
+    <button class="f" onclick="flt('ALLOW',this)">Allow</button>
+    <button class="f" onclick="flt('CHALLENGE',this)">Challenge</button>
     <button class="f" onclick="flt('BLOCK',this)">Block</button>
   </div>
 
@@ -63,7 +63,7 @@ tr:hover td{background:var(--surf)}
         <td>{{ l.ip }}</td>
         <td class="ua" title="{{ l.user_agent }}">{{ l.user_agent[:32] if l.user_agent else '—' }}</td>
         <td style="color:var(--dim);font-size:10px">{{ l.flags or '—' }}</td>
-        <td>{% if l.action=='OK' %}<span class="b ok">OK</span>{% elif l.action=='ALERT' %}<span class="b alert">ALERT</span>{% else %}<span class="b block">BLOCK</span>{% endif %}</td>
+        <td>{% if l.action=='ALLOW' %}<span class="b ok">ALLOW</span>{% elif l.action=='CHALLENGE' %}<span class="b alert">CHALLENGE</span>{% else %}<span class="b block">BLOCK</span>{% endif %}</td>
         <td style="color:var(--dim)">{{ l.ts }}</td>
       </tr>
     {% endfor %}{% else %}
